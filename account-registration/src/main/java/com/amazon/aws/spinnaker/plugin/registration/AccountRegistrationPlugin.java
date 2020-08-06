@@ -31,9 +31,9 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
-public class ExamplePlugin extends PrivilegedSpringPlugin {
+public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
 
-    public ExamplePlugin(PluginWrapper wrapper) {
+    public AccountRegistrationPlugin(PluginWrapper wrapper) {
         super(wrapper);
     }
 

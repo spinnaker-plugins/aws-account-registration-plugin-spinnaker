@@ -35,7 +35,6 @@ import java.util.Set;
 @Slf4j
 class LazyLoadCredentialsRepository extends MapBackedAccountCredentialsRepository {
     AmazonPollingSynchronizer synchronizer;
-    ApplicationContext context;
 
     @Autowired
     public void setSynchronizer( AmazonPollingSynchronizer synchronizer) {

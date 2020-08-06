@@ -26,9 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-//@JsonIgnoreProperties(ignoreUnknown = true)
 public class Response {
-//    List<CredentialsConfig.Account> accounts;
     List<Account> accounts;
     Long bookmark;
 }

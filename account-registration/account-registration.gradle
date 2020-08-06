@@ -33,7 +33,7 @@ sourceSets.main.groovy.srcDirs += ["src/main/java"]
 
 spinnakerPlugin {
   serviceName = "clouddriver"
-  pluginClass = "com.amazon.aws.spinnaker.plugin.registration.ExamplePlugin"
+  pluginClass = "com.amazon.aws.spinnaker.plugin.registration.AccountRegistrationPlugin"
   requires = "clouddriver>=5.0.0"
 }
 
