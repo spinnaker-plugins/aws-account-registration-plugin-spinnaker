@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 @ConfigurationProperties(prefix = "account-provision")
 public class AccountRegistrationProperties {
-    String url = "localhost:8080/hello";
+    String url = "http://localhost:8080/hello";
     Long pullFrequencyInMilliSeconds = 10000L;
     Long syncAgentFrequencyInMilliSeconds = 10000L;
 }
