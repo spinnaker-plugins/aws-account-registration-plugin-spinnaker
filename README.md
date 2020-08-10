@@ -1,11 +1,12 @@
-## My Project
+## Spinnaker Plugin for Dynamic Account Registration
 
-TODO: Fill this README out!
-
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
+Available configuration properties:
+```yaml
+account-provision:
+  url: 'http://localhost:8080/hello' # Remote host address. 
+  pullFrequencyInMilliSeconds: 10000 # How often this plugin should query the remote host.
+  syncAgentFrequencyInMilliSeconds: 10000 # How often agent scheduler should run.
+```
 
 ## Security
 
