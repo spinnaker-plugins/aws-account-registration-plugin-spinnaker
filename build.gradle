@@ -10,7 +10,6 @@ buildscript {
 
 plugins {
   id("com.palantir.git-version").version("0.12.2")
-//  id("com.moowork.node").version("1.3.1").apply(false)
 }
 apply plugin: "io.spinnaker.plugin.bundler"
 
@@ -21,19 +20,7 @@ spinnakerBundle {
   version = rootProject.version
 }
 
-// version = normalizedVersion()
-
 subprojects {
   group = "com.amazon.aws.spinnaker.plugin.registration"
   version = rootProject.version
 }
-
-// String normalizedVersion() {
-//   String fullVersion = gitVersion()
-//   String normalized = fullVersion.split("-").first()
-//   if (fullVersion.contains("dirty")) {
-//     return "$normalized-SNAPSHOT"
-//   } else {
-//     return normalized
-//   }
-// }
