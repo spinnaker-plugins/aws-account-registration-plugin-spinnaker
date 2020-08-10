@@ -194,11 +194,11 @@ class AmazonPollingSynchronizer {
                 continue;
             }
             for (String provider : account.getProviders()) {
-                if (provider.equals("lambda")) {
+                if ("lambda".equals(provider)) {
                     ec2Account.setLambdaEnabled(true);
                     break;
                 }
-                if (provider.equals("ecs")) {
+                if ("ecs".equals(provider)) {
                     ecsAccountsToAdd.add(makeECSAccount(account));
                     break;
                 }
