@@ -25,14 +25,17 @@ import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader;
 import com.netflix.spinnaker.clouddriver.ecs.provider.view.EcsAccountMapper;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +46,7 @@ import java.util.List;
 class AmazonPollingSynchronizer {
     private Long lastSyncTime;
     private final RestTemplate restTemplate;
+    private final AccountRegistrationProperties accountRegistrationProperties;
     // agent removal
     private final CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader;
     private final CredentialsConfig credentialsConfig;
@@ -52,6 +56,7 @@ class AmazonPollingSynchronizer {
     // ECS accounts
     private final ECSCredentialsConfig ecsCredentialsConfig;
     private final ApplicationContext applicationContext;
+    private EcsAccountMapper ecsAccountMapper;
 
     @Autowired
     AmazonPollingSynchronizer(
@@ -60,7 +65,8 @@ class AmazonPollingSynchronizer {
             CredentialsConfig credentialsConfig,
             LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
             DefaultAccountConfigurationProperties defaultAccountConfigurationProperties,
-            ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext
+            ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext,
+            AccountRegistrationProperties accountRegistrationProperties
     ) {
         this.restTemplate = restTemplate;
         this.credentialsLoader = credentialsLoader;
@@ -69,6 +75,7 @@ class AmazonPollingSynchronizer {
         this.defaultAccountConfigurationProperties = defaultAccountConfigurationProperties;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.applicationContext = applicationContext;
+        this.accountRegistrationProperties = accountRegistrationProperties;
     }
 
     // circular dependency if not lazily loaded.
@@ -77,33 +84,21 @@ class AmazonPollingSynchronizer {
         this.catsModule = catsModule;
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelayString = "${accountProvision.pullFrequencyInMilliSeconds:10000}" )
     void schedule() {
         sync();
     }
 
-
+    @PostConstruct
     void sync() {
         // Get accounts from remote
+        System.out.println(accountRegistrationProperties.getUrl());
         Response response;
-        if (lastSyncTime == null) {
-            response = restTemplate.getForObject("http://localhost:8080/hello", Response.class);
-        } else {
-            response = restTemplate.getForObject("http://localhost:8080/hello?after=" + lastSyncTime.toString(), Response.class);
-            if (response != null && response.accounts == null && response.bookmark != null) {
-                lastSyncTime = response.bookmark;
-                return;
-            }
-            if (response != null && response.bookmark == null) {
-                log.error("Response from remote host did not contain a valid marker");
-                return;
-            }
-        }
-        // convert to credentialsConfig from received response.
+        response = getResourceFromRemoteHost(accountRegistrationProperties.getUrl());
         if (response == null) {
-            log.error("Response from remote host did not return valid accounts.");
             return;
         }
+        // convert to credentialsConfig from received response.
         AccountsStatus status = ConvertCredentials(response.accounts);
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
@@ -150,17 +145,24 @@ class AmazonPollingSynchronizer {
                     ecsCredentialsConfig, catsModule);
         } catch (Throwable throwable) {
             log.error("Error encountered while adding ECS accounts: {}", throwable.getMessage());
+            return;
         }
         // EcsAccountMapper is normally initialized and never refreshed. Need to refresh here.
         try {
 //            EcsProviderUtils.synchronizeEcsCredentialsMapper(ecsAccountMapper, lazyLoadCredentialsRepository);
             // Cannot autowire EcsAccountMapper for some reason. It returns every field wth null values.
             // Doing it this way is a problem.
-            EcsAccountMapper EAP = (EcsAccountMapper) applicationContext.getBean("ecsAccountMapper");
-            EcsProviderUtils.synchronizeEcsCredentialsMapper(EAP, lazyLoadCredentialsRepository);
+            if (this.ecsAccountMapper == null) {
+                this.ecsAccountMapper = (EcsAccountMapper) applicationContext.getBean("ecsAccountMapper");
+            }
+            EcsProviderUtils.synchronizeEcsCredentialsMapper(ecsAccountMapper, lazyLoadCredentialsRepository);
         } catch (IllegalAccessException | NoSuchFieldException e) {
             log.error("Error encountered while updating ECS credentials mapper: {}", e.getMessage());
             e.printStackTrace();
+            return;
+        } catch (BeansException e) {
+            log.error("Error obtaining EcsAccountMapper bean from Spring context.");
+            return;
         }
 
         lastSyncTime = response.bookmark;
@@ -233,6 +235,28 @@ class AmazonPollingSynchronizer {
         status.setEc2Accounts(ec2AccountsToAdd);
         status.setEcsAccounts(ecsAccountsToAdd);
         return status;
+    }
+
+    private Response getResourceFromRemoteHost(String url) {
+        Response response;
+        if (lastSyncTime != null) {
+            url = url + "?after=" + lastSyncTime.toString();
+        }
+        try {
+            response = restTemplate.getForObject(url, Response.class);
+        } catch (RestClientException e) {
+            log.error("Unable to retrieve account information from remote host. {}", e.getMessage());
+            return null;
+        }
+        if (response != null && response.bookmark == null) {
+            log.error("Response from remote host did not contain a valid marker");
+            return null;
+        }
+        if (response != null && response.accounts == null && response.bookmark != null) {
+            lastSyncTime = response.bookmark;
+            return null;
+        }
+        return response;
     }
 
 }

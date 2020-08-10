@@ -35,12 +35,14 @@ public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
     public void registerBeanDefinitions(BeanDefinitionRegistry registry) {
         BeanDefinition pollingBeanDefinition = beanDefinitionFor(AmazonPollingSynchronizer.class);
         BeanDefinition amazonCachingAgentScheduler = beanDefinitionFor(AmazonCachingAgentScheduler.class);
+        BeanDefinition accountCredentialsProperties = beanDefinitionFor(AccountRegistrationProperties.class);
         BeanDefinition lazyLoadCredentialsRepositoryDefinition = primaryBeanDefinitionFor(LazyLoadCredentialsRepository.class);
 
         try {
             log.debug("Registering bean: {}", pollingBeanDefinition.getBeanClassName());
             registerBean(pollingBeanDefinition, registry);
             registerBean(amazonCachingAgentScheduler, registry);
+            registerBean(accountCredentialsProperties, registry);
 
         } catch (ClassNotFoundException e) {
             log.error("Could not register bean {}", pollingBeanDefinition.getBeanClassName());
