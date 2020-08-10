@@ -44,7 +44,7 @@ public class AmazonECSCachingAgentScheduler {
         this.iamPolicyReader = iamPolicyReader;
     }
 
-    // Sync ECS accounts. Code is mostly from com/netflix/spinnaker/clouddriver/ecs/security/EcsCredentialsInitializer.java
+    // Sync ECS accounts. Code is mostly from clouddriver-ecs/src/main/java/com/netflix/spinnaker/clouddriver/ecs/provider/config/EcsProviderConfig.java
     @Scheduled(fixedDelayString = "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
     public void synchronizeEcsProvider() {
         // Cannot use ProviderUtils.getScheduledAccounts. EcsProvider does not implement AccountAware.

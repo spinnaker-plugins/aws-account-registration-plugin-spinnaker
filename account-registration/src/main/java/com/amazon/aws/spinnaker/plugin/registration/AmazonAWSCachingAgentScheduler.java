@@ -35,7 +35,7 @@ public class AmazonAWSCachingAgentScheduler {
 
     @Autowired
     public AmazonAWSCachingAgentScheduler(LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
-                                          AmazonClientProvider amazonClientProvider, ObjectMapper amazonObjectMapper,
+                                          AmazonClientProvider amazonClientProvider,
                                           Registry registry, EddaTimeoutConfig eddaTimeoutConfig, AwsProvider awsProvider,
                                           AmazonCloudProvider amazonCloudProvider, AmazonS3DataProvider amazonS3DataProvider,
                                           ObjectMapper objectMapper, EddaApiFactory eddaApiFactory, ApplicationContext ctx,
