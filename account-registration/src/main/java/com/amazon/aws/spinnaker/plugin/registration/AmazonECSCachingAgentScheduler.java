@@ -29,10 +29,10 @@ public class AmazonECSCachingAgentScheduler {
 
 
     @Autowired
-    public AmazonECSCachingAgentScheduler( LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
-                                           AmazonClientProvider amazonClientProvider, ObjectMapper objectMapper,
-                                           EcsProvider ecsProvider, AWSCredentialsProvider awsCredentialsProvider,
-                                           IamPolicyReader iamPolicyReader, Registry registry
+    public AmazonECSCachingAgentScheduler(LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
+                                          AmazonClientProvider amazonClientProvider, ObjectMapper objectMapper,
+                                          EcsProvider ecsProvider, AWSCredentialsProvider awsCredentialsProvider,
+                                          IamPolicyReader iamPolicyReader, Registry registry
 
     ) {
         this.lazyLoadCredentialsRepository = lazyLoadCredentialsRepository;
@@ -45,7 +45,7 @@ public class AmazonECSCachingAgentScheduler {
     }
 
     // Sync ECS accounts. Code is mostly from com/netflix/spinnaker/clouddriver/ecs/security/EcsCredentialsInitializer.java
-    @Scheduled(fixedDelayString= "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
+    @Scheduled(fixedDelayString = "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
     public void synchronizeEcsProvider() {
         // Cannot use ProviderUtils.getScheduledAccounts. EcsProvider does not implement AccountAware.
         // ProviderUtils.getScheduledAccounts will always return an empty set for EcsProvider.
@@ -152,11 +152,11 @@ public class AmazonECSCachingAgentScheduler {
             try {
                 Field accountNameField = agent.getClass().getDeclaredField("accountName");
                 accountNameField.setAccessible(true);
-                String accountName = (String)accountNameField.get(agent);
+                String accountName = (String) accountNameField.get(agent);
                 scheduledAccounts.add(accountName);
             } catch (IllegalAccessException | NoSuchFieldException e) {
                 String[] agentStringList = agent.getAgentType().split("/");
-                String accountName = Arrays.stream(agentStringList).limit(agentStringList.length - 2 ).collect(Collectors.joining());
+                String accountName = Arrays.stream(agentStringList).limit(agentStringList.length - 2).collect(Collectors.joining());
                 if (!accountName.isEmpty()) {
                     scheduledAccounts.add(accountName);
                 }

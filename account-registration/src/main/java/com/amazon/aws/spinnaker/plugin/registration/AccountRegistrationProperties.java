@@ -21,7 +21,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties(prefix="account-provision")
+@ConfigurationProperties(prefix = "account-provision")
 public class AccountRegistrationProperties {
     String url = "localhost:8080/hello";
     Long pullFrequencyInMilliSeconds = 10000L;

@@ -29,7 +29,7 @@ class LazyLoadCredentialsRepository extends MapBackedAccountCredentialsRepositor
     AmazonPollingSynchronizer synchronizer;
 
     @Autowired
-    public void setSynchronizer( AmazonPollingSynchronizer synchronizer) {
+    public void setSynchronizer(AmazonPollingSynchronizer synchronizer) {
         this.synchronizer = synchronizer;
     }
 

@@ -17,27 +17,17 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.netflix.spectator.api.Registry;
-import com.netflix.spinnaker.cats.agent.Agent;
 import com.netflix.spinnaker.cats.module.CatsModule;
-import com.netflix.spinnaker.clouddriver.aws.security.AmazonClientProvider;
-import com.netflix.spinnaker.clouddriver.aws.security.AmazonCredentials;
 import com.netflix.spinnaker.clouddriver.aws.security.NetflixAmazonCredentials;
 import com.netflix.spinnaker.clouddriver.aws.security.NetflixAssumeRoleAmazonCredentials;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader;
-import com.netflix.spinnaker.clouddriver.ecs.EcsCloudProvider;
-import com.netflix.spinnaker.clouddriver.ecs.provider.EcsProvider;
-import com.netflix.spinnaker.clouddriver.ecs.provider.agent.*;
 import com.netflix.spinnaker.clouddriver.ecs.provider.view.EcsAccountMapper;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.EcsAccountBuilder;
 import com.netflix.spinnaker.clouddriver.ecs.security.NetflixAssumeRoleEcsCredentials;
 import com.netflix.spinnaker.clouddriver.ecs.security.NetflixECSCredentials;
 import com.netflix.spinnaker.clouddriver.security.AccountCredentials;
-import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository;
 import com.netflix.spinnaker.clouddriver.security.ProviderUtils;
 
 import java.lang.reflect.Field;
@@ -48,32 +38,32 @@ import java.util.stream.Collectors;
 public final class EcsProviderUtils {
     public static void synchronizeEcsCredentialsMapper(EcsAccountMapper ecsAccountMapper,
                                                        LazyLoadCredentialsRepository lazyLoadCredentialsRepository) throws IllegalAccessException, NoSuchFieldException {
-            Set<? extends AccountCredentials> allAccounts = lazyLoadCredentialsRepository.getAll();
-            Collection<NetflixAssumeRoleEcsCredentials> ecsAccounts =
-                    (Collection<NetflixAssumeRoleEcsCredentials>)
-                            allAccounts.stream()
-                                    .filter(credentials -> credentials instanceof NetflixAssumeRoleEcsCredentials)
-                                    .collect(Collectors.toSet());
-            Map<String, NetflixAssumeRoleEcsCredentials> ecsCredentialsMap = new HashMap<>();
-            Map<String, NetflixAmazonCredentials> awsCredentialsMap = new HashMap<>();
+        Set<? extends AccountCredentials> allAccounts = lazyLoadCredentialsRepository.getAll();
+        Collection<NetflixAssumeRoleEcsCredentials> ecsAccounts =
+                (Collection<NetflixAssumeRoleEcsCredentials>)
+                        allAccounts.stream()
+                                .filter(credentials -> credentials instanceof NetflixAssumeRoleEcsCredentials)
+                                .collect(Collectors.toSet());
+        Map<String, NetflixAssumeRoleEcsCredentials> ecsCredentialsMap = new HashMap<>();
+        Map<String, NetflixAmazonCredentials> awsCredentialsMap = new HashMap<>();
 
-            for (NetflixAssumeRoleEcsCredentials ecsAccount : ecsAccounts) {
-                ecsCredentialsMap.put(ecsAccount.getAwsAccount(), ecsAccount);
+        for (NetflixAssumeRoleEcsCredentials ecsAccount : ecsAccounts) {
+            ecsCredentialsMap.put(ecsAccount.getAwsAccount(), ecsAccount);
 
-                allAccounts.stream()
-                        .filter(credentials -> credentials.getName().equals(ecsAccount.getAwsAccount()))
-                        .findFirst()
-                        .ifPresent(
-                                v -> awsCredentialsMap.put(ecsAccount.getName(), (NetflixAmazonCredentials) v));
-            }
-            // Update EcsAccountMapper's private fields.
-            Field ecsCredentialsMapField = ecsAccountMapper.getClass().getDeclaredField("ecsCredentialsMap");
-            ecsCredentialsMapField.setAccessible(true);
-            Field awsCredentialsMapField = ecsAccountMapper.getClass().getDeclaredField("awsCredentialsMap");
-            awsCredentialsMapField.setAccessible(true);
-            ecsCredentialsMapField.set(ecsAccountMapper, ecsCredentialsMap);
-            awsCredentialsMapField.set(ecsAccountMapper, awsCredentialsMap);
+            allAccounts.stream()
+                    .filter(credentials -> credentials.getName().equals(ecsAccount.getAwsAccount()))
+                    .findFirst()
+                    .ifPresent(
+                            v -> awsCredentialsMap.put(ecsAccount.getName(), (NetflixAmazonCredentials) v));
         }
+        // Update EcsAccountMapper's private fields.
+        Field ecsCredentialsMapField = ecsAccountMapper.getClass().getDeclaredField("ecsCredentialsMap");
+        ecsCredentialsMapField.setAccessible(true);
+        Field awsCredentialsMapField = ecsAccountMapper.getClass().getDeclaredField("awsCredentialsMap");
+        awsCredentialsMapField.setAccessible(true);
+        ecsCredentialsMapField.set(ecsAccountMapper, ecsCredentialsMap);
+        awsCredentialsMapField.set(ecsAccountMapper, awsCredentialsMap);
+    }
 
     // Sync ECS accounts. Code is mostly from com/netflix/spinnaker/clouddriver/ecs/security/EcsCredentialsInitializer.java
     public static void synchronizeEcsAccounts(
@@ -113,14 +103,14 @@ public final class EcsProviderUtils {
         List<NetflixECSCredentials> accountsToAdd = new ArrayList<>();
         List<String> namesOfDeletedAccounts = new ArrayList<>();
         // Maybe unsafe. need checking.
-        for (Object obj : (LinkedList<?>)results.get(0)) {
-            accountsToAdd.add((NetflixECSCredentials)obj);
+        for (Object obj : (LinkedList<?>) results.get(0)) {
+            accountsToAdd.add((NetflixECSCredentials) obj);
         }
-        for (Object obj : (ArrayList<?>)results.get(1)){
-            namesOfDeletedAccounts.add((String)obj);
+        for (Object obj : (ArrayList<?>) results.get(1)) {
+            namesOfDeletedAccounts.add((String) obj);
         }
         for (NetflixECSCredentials credential : accountsToAdd) {
-                lazyLoadCredentialsRepository.save(credential.getName(), credential);
+            lazyLoadCredentialsRepository.save(credential.getName(), credential);
         }
         ProviderUtils.unscheduleAndDeregisterAgents(namesOfDeletedAccounts, catsModule);
     }

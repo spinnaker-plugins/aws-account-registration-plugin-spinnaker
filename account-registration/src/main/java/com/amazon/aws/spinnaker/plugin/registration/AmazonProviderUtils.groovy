@@ -43,19 +43,19 @@ import java.util.concurrent.ExecutorService
 import static com.amazonaws.regions.Regions.*
 
 class AmazonProviderUtils {
-    public static void synchronizeAwsProvider(AwsProvider awsProvider,
-                                       AmazonCloudProvider amazonCloudProvider,
-                                       AmazonClientProvider amazonClientProvider,
-                                       AmazonS3DataProvider amazonS3DataProvider,
-                                       AccountCredentialsRepository accountCredentialsRepository,
-                                       ObjectMapper objectMapper,
-                                       EddaApiFactory eddaApiFactory,
-                                       ApplicationContext ctx,
-                                       Registry registry,
-                                       Optional<ExecutorService> reservationReportPool,
-                                       Collection<AgentProvider> agentProviders,
-                                       EddaTimeoutConfig eddaTimeoutConfig,
-                                       DynamicConfigService dynamicConfigService) {
+    static void synchronizeAwsProvider(AwsProvider awsProvider,
+                                              AmazonCloudProvider amazonCloudProvider,
+                                              AmazonClientProvider amazonClientProvider,
+                                              AmazonS3DataProvider amazonS3DataProvider,
+                                              AccountCredentialsRepository accountCredentialsRepository,
+                                              ObjectMapper objectMapper,
+                                              EddaApiFactory eddaApiFactory,
+                                              ApplicationContext ctx,
+                                              Registry registry,
+                                              Optional<ExecutorService> reservationReportPool,
+                                              Collection<AgentProvider> agentProviders,
+                                              EddaTimeoutConfig eddaTimeoutConfig,
+                                              DynamicConfigService dynamicConfigService) {
         def scheduledAccounts = ProviderUtils.getScheduledAccounts(awsProvider)
         Set<NetflixAmazonCredentials> allAccounts = ProviderUtils.buildThreadSafeSetOfAccounts(accountCredentialsRepository, NetflixAmazonCredentials, AmazonCloudProvider.ID)
 
@@ -125,7 +125,7 @@ class AmazonProviderUtils {
     }
 
     static void synchronizeReservationReportCachingAgentAccounts(AwsProvider awsProvider,
-                                                                        Collection<NetflixAmazonCredentials> allAccounts) {
+                                                                 Collection<NetflixAmazonCredentials> allAccounts) {
         ReservationReportCachingAgent reservationReportCachingAgent = awsProvider.agents.find { agent ->
             agent instanceof ReservationReportCachingAgent
         }
@@ -155,16 +155,16 @@ class AmazonProviderUtils {
         }
     }
 
-    public static void synchronizeAwsInfrastructureProvider(AwsInfrastructureProvider awsInfrastructureProvider,
-                                                             AmazonClientProvider amazonClientProvider,
-                                                             AccountCredentialsRepository accountCredentialsRepository,
-                                                             @Qualifier("amazonObjectMapper") ObjectMapper amazonObjectMapper,
-                                                             Registry registry,
-                                                             EddaTimeoutConfig eddaTimeoutConfig) {
+    static void synchronizeAwsInfrastructureProvider(AwsInfrastructureProvider awsInfrastructureProvider,
+                                                     AmazonClientProvider amazonClientProvider,
+                                                     AccountCredentialsRepository accountCredentialsRepository,
+                                                     @Qualifier("amazonObjectMapper") ObjectMapper amazonObjectMapper,
+                                                     Registry registry,
+                                                     EddaTimeoutConfig eddaTimeoutConfig) {
         def scheduledAccounts = ProviderUtils.getScheduledAccounts(awsInfrastructureProvider)
         def allAccounts = ProviderUtils.buildThreadSafeSetOfAccounts(accountCredentialsRepository, NetflixAmazonCredentials, AmazonCloudProvider.ID)
 
-        Set<String> regions = new HashSet<>();
+        Set<String> regions = new HashSet<>()
         allAccounts.each { NetflixAmazonCredentials credentials ->
             for (AmazonCredentials.AWSRegion region : credentials.regions) {
                 if (!scheduledAccounts.contains(credentials.name)) {
@@ -195,7 +195,7 @@ class AmazonProviderUtils {
     // From com/netflix/spinnaker/clouddriver/aws/security/DefaultAmazonAccountsSynchronizer.groovy
     // use NetflixAssumeRoleAmazonCredentials instead of NetflixAmazonCredentials. Might be a problem when
     // NetflixAssumeRoleAmazonCredentials is not used.
-    static void  AmazonAccountsSynchronizer(
+    static void AmazonAccountsSynchronizer(
             CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader,
             CredentialsConfig credentialsConfig,
             AccountCredentialsRepository accountCredentialsRepository,
@@ -230,7 +230,7 @@ class AmazonProviderUtils {
 
     // from com/netflix/spinnaker/clouddriver/aws/security/DefaultAmazonAccountsSynchronizer.groovy
     // Modified to not remove ECS account.
-    public static List calculateAccountDeltas(def accountCredentialsRepository, def credentialsType, def desiredAccounts) {
+    static List calculateAccountDeltas(def accountCredentialsRepository, def credentialsType, def desiredAccounts) {
         def oldNames = accountCredentialsRepository.all.findAll {
             credentialsType.isInstance(it) && !NetflixECSCredentials.isInstance(it)
         }.collect {
