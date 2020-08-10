@@ -17,8 +17,8 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
-import lombok.Data;
 import com.netflix.spinnaker.fiat.model.resources.Permissions;
+import lombok.Data;
 
 import java.util.List;
 
