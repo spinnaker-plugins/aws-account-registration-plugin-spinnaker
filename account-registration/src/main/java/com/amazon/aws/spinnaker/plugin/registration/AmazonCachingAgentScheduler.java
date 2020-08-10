@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutorService;
 
 @Component
 public class AmazonCachingAgentScheduler {
-    LazyLoadCredentialsRepository lazyLoadCredentialsRepository;
+    final LazyLoadCredentialsRepository lazyLoadCredentialsRepository;
     // AWS infra agent
     private final AwsInfrastructureProvider awsInfrastructureProvider;
     private final AmazonClientProvider amazonClientProvider;

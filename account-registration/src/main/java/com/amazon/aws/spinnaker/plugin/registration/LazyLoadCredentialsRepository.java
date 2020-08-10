@@ -35,7 +35,6 @@ class LazyLoadCredentialsRepository extends MapBackedAccountCredentialsRepositor
 
     @Override
     public AccountCredentials getOne(String key) {
-        log.info("Custom credentials repo! Processing {}.", key);
         synchronizer.sync();
         AccountCredentials cred = super.getOne(key);
         if (cred == null) {

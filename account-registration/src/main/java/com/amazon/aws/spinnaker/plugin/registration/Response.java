@@ -19,10 +19,14 @@ package com.amazon.aws.spinnaker.plugin.registration;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class Response {
+    Response() {
+        this.accounts = new ArrayList<>();
+    }
     List<Account> accounts;
     Long bookmark;
 }

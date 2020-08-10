@@ -49,8 +49,6 @@ public class EcsProviderUtils {
     public static void synchronizeEcsCredentialsMapper(EcsAccountMapper ecsAccountMapper,
                                                        LazyLoadCredentialsRepository lazyLoadCredentialsRepository) throws IllegalAccessException, NoSuchFieldException {
             Set<? extends AccountCredentials> allAccounts = lazyLoadCredentialsRepository.getAll();
-            System.out.println("==============");
-            System.out.println(ecsAccountMapper.fromAwsAccountNameToEcs("mccloman-1"));
             Collection<NetflixAssumeRoleEcsCredentials> ecsAccounts =
                     (Collection<NetflixAssumeRoleEcsCredentials>)
                             allAccounts.stream()
