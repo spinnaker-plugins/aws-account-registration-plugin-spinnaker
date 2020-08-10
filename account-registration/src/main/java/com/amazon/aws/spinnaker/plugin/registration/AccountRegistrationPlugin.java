@@ -18,17 +18,11 @@
 package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.netflix.spinnaker.kork.plugins.api.spring.PrivilegedSpringPlugin;
-import org.pf4j.PluginWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.pf4j.PluginWrapper;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.context.annotation.Bean;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Slf4j
 public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {

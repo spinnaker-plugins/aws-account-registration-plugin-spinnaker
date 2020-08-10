@@ -17,19 +17,11 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
-import com.netflix.discovery.shared.Application;
 import com.netflix.spinnaker.clouddriver.security.AccountCredentials;
-import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository;
 import com.netflix.spinnaker.clouddriver.security.MapBackedAccountCredentialsRepository;
-import groovy.lang.MetaClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import java.util.Set;
 
 @Component
 @Slf4j

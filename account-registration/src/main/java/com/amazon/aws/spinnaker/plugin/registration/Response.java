@@ -17,12 +17,8 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.netflix.spinnaker.clouddriver.aws.security.NetflixAmazonCredentials;
-import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import lombok.Data;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Data

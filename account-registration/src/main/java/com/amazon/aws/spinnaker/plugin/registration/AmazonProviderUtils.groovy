@@ -26,32 +26,9 @@ import com.netflix.spinnaker.clouddriver.aws.AmazonCloudProvider
 import com.netflix.spinnaker.clouddriver.aws.edda.EddaApiFactory
 import com.netflix.spinnaker.clouddriver.aws.provider.AwsInfrastructureProvider
 import com.netflix.spinnaker.clouddriver.aws.provider.AwsProvider
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonApplicationLoadBalancerCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonCertificateCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonCloudFormationCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonElasticIpCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonInstanceTypeCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonKeyPairCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonLaunchTemplateCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonLoadBalancerCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonLoadBalancerInstanceStateCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonSecurityGroupCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonSubnetCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.AmazonVpcCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.ClusterCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.EddaLoadBalancerCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.ImageCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.InstanceCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.LaunchConfigCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.ReservationReportCachingAgent
-import com.netflix.spinnaker.clouddriver.aws.provider.agent.ReservedInstancesCachingAgent
+import com.netflix.spinnaker.clouddriver.aws.provider.agent.*
 import com.netflix.spinnaker.clouddriver.aws.provider.view.AmazonS3DataProvider
-import com.netflix.spinnaker.clouddriver.aws.security.AmazonClientProvider
-import com.netflix.spinnaker.clouddriver.aws.security.AmazonCredentials
-import com.netflix.spinnaker.clouddriver.aws.security.NetflixAssumeRoleAmazonCredentials;
-import com.netflix.spinnaker.clouddriver.aws.security.DefaultAccountConfigurationProperties
-import com.netflix.spinnaker.clouddriver.aws.security.EddaTimeoutConfig
-import com.netflix.spinnaker.clouddriver.aws.security.NetflixAmazonCredentials
+import com.netflix.spinnaker.clouddriver.aws.security.*
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader
 import com.netflix.spinnaker.clouddriver.ecs.security.NetflixECSCredentials
@@ -63,10 +40,7 @@ import org.springframework.context.ApplicationContext
 
 import java.util.concurrent.ExecutorService
 
-import static com.amazonaws.regions.Regions.EU_WEST_1
-import static com.amazonaws.regions.Regions.US_EAST_1
-import static com.amazonaws.regions.Regions.US_WEST_1
-import static com.amazonaws.regions.Regions.US_WEST_2
+import static com.amazonaws.regions.Regions.*
 
 class AmazonProviderUtils {
     public static void synchronizeAwsProvider(AwsProvider awsProvider,
@@ -150,7 +124,7 @@ class AmazonProviderUtils {
         awsProvider.synchronizeHealthAgents()
     }
 
-    public static void synchronizeReservationReportCachingAgentAccounts(AwsProvider awsProvider,
+    static void synchronizeReservationReportCachingAgentAccounts(AwsProvider awsProvider,
                                                                         Collection<NetflixAmazonCredentials> allAccounts) {
         ReservationReportCachingAgent reservationReportCachingAgent = awsProvider.agents.find { agent ->
             agent instanceof ReservationReportCachingAgent
