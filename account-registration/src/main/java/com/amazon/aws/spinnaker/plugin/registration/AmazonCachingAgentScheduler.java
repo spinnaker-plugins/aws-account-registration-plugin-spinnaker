@@ -98,7 +98,7 @@ public class AmazonCachingAgentScheduler {
         this.iamPolicyReader = iamPolicyReader;
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelayString = "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
     public void sync() {
         synchronizeAwsInfrastructureProvider();
         synchronizeAwsProvider();
