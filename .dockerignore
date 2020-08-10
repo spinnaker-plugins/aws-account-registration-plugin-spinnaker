@@ -1,6 +1,0 @@
-**
-!clouddriver-web/build/install/clouddriver
-!test
-!response*
-!wrapper.sh
-!spinnaker-aws-account-registration-0.0.1.zip
