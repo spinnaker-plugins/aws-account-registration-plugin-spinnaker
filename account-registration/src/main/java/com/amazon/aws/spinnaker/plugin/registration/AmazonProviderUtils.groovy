@@ -44,18 +44,18 @@ import static com.amazonaws.regions.Regions.*
 
 class AmazonProviderUtils {
     static void synchronizeAwsProvider(AwsProvider awsProvider,
-                                              AmazonCloudProvider amazonCloudProvider,
-                                              AmazonClientProvider amazonClientProvider,
-                                              AmazonS3DataProvider amazonS3DataProvider,
-                                              AccountCredentialsRepository accountCredentialsRepository,
-                                              ObjectMapper objectMapper,
-                                              EddaApiFactory eddaApiFactory,
-                                              ApplicationContext ctx,
-                                              Registry registry,
-                                              Optional<ExecutorService> reservationReportPool,
-                                              Collection<AgentProvider> agentProviders,
-                                              EddaTimeoutConfig eddaTimeoutConfig,
-                                              DynamicConfigService dynamicConfigService) {
+                                       AmazonCloudProvider amazonCloudProvider,
+                                       AmazonClientProvider amazonClientProvider,
+                                       AmazonS3DataProvider amazonS3DataProvider,
+                                       AccountCredentialsRepository accountCredentialsRepository,
+                                       ObjectMapper objectMapper,
+                                       EddaApiFactory eddaApiFactory,
+                                       ApplicationContext ctx,
+                                       Registry registry,
+                                       Optional<ExecutorService> reservationReportPool,
+                                       Collection<AgentProvider> agentProviders,
+                                       EddaTimeoutConfig eddaTimeoutConfig,
+                                       DynamicConfigService dynamicConfigService) {
         def scheduledAccounts = ProviderUtils.getScheduledAccounts(awsProvider)
         Set<NetflixAmazonCredentials> allAccounts = ProviderUtils.buildThreadSafeSetOfAccounts(accountCredentialsRepository, NetflixAmazonCredentials, AmazonCloudProvider.ID)
 
