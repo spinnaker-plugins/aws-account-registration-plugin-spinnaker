@@ -18,9 +18,7 @@
 package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.netflix.spinnaker.cats.module.CatsModule;
-import com.netflix.spinnaker.clouddriver.aws.security.AmazonAccountsSynchronizer;
 import com.netflix.spinnaker.clouddriver.aws.security.DefaultAccountConfigurationProperties;
-import com.netflix.spinnaker.clouddriver.aws.security.DefaultAmazonAccountsSynchronizer;
 import com.netflix.spinnaker.clouddriver.aws.security.NetflixAmazonCredentials;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader;
@@ -44,27 +42,24 @@ import java.util.List;
 @Slf4j
 class AmazonPollingSynchronizer {
     private Long lastSyncTime;
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
     // agent removal
-    private CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader;
-    private CredentialsConfig credentialsConfig;
-    private LazyLoadCredentialsRepository lazyLoadCredentialsRepository;
-    private DefaultAccountConfigurationProperties defaultAccountConfigurationProperties;
-    private DefaultAmazonAccountsSynchronizer defaultAmazonAccountsSynchronizer;
+    private final CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader;
+    private final CredentialsConfig credentialsConfig;
+    private final LazyLoadCredentialsRepository lazyLoadCredentialsRepository;
+    private final DefaultAccountConfigurationProperties defaultAccountConfigurationProperties;
     private CatsModule catsModule;
     // ECS accounts
-    private ECSCredentialsConfig ecsCredentialsConfig;
-    private EcsAccountMapper ecsAccountMapper;
-    private ApplicationContext applicationContext;
+    private final ECSCredentialsConfig ecsCredentialsConfig;
+    private final ApplicationContext applicationContext;
 
     @Autowired
     AmazonPollingSynchronizer(
-            RestTemplate restTemplate, AmazonAccountsSynchronizer amazonAccountsSynchronizer,
+            RestTemplate restTemplate,
             CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader,
             CredentialsConfig credentialsConfig,
             LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
             DefaultAccountConfigurationProperties defaultAccountConfigurationProperties,
-            DefaultAmazonAccountsSynchronizer defaultAmazonAccountsSynchronizer,
             ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext
     ) {
         this.restTemplate = restTemplate;
@@ -72,7 +67,6 @@ class AmazonPollingSynchronizer {
         this.credentialsConfig = credentialsConfig;
         this.lazyLoadCredentialsRepository = lazyLoadCredentialsRepository;
         this.defaultAccountConfigurationProperties = defaultAccountConfigurationProperties;
-        this.defaultAmazonAccountsSynchronizer = defaultAmazonAccountsSynchronizer;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.applicationContext = applicationContext;
     }
@@ -81,13 +75,6 @@ class AmazonPollingSynchronizer {
     @Autowired
     void setCatsModule(@Lazy CatsModule catsModule) {
         this.catsModule = catsModule;
-    }
-
-    // This doesn't seem to work.
-    @Lazy
-    @Autowired
-    void setEcsAccountMapper(EcsAccountMapper ecsAccountMapper) {
-        this.ecsAccountMapper = ecsAccountMapper;
     }
 
     @Scheduled(fixedDelay = 10000)
@@ -103,18 +90,22 @@ class AmazonPollingSynchronizer {
             response = restTemplate.getForObject("http://localhost:8080/hello", Response.class);
         } else {
             response = restTemplate.getForObject("http://localhost:8080/hello?after=" + lastSyncTime.toString(), Response.class);
-            if (response.accounts == null && response.bookmark != null) {
+            if (response != null && response.accounts == null && response.bookmark != null) {
                 lastSyncTime = response.bookmark;
                 return;
             }
-            if (response.bookmark == null) {
+            if (response != null && response.bookmark == null) {
                 log.error("Response from remote host did not contain a valid marker");
                 return;
             }
         }
         // convert to credentialsConfig from received response.
+        if (response == null) {
+            log.error("Response from remote host did not return valid accounts.");
+            return;
+        }
         AccountsStatus status = ConvertCredentials(response.accounts);
-        // Always use external source as credentials repos's correct state.
+        // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
             boolean add = true;
@@ -145,7 +136,6 @@ class AmazonPollingSynchronizer {
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
         // ProviderUtils.calculateAccountDeltas()
         credentialsConfig.setAccounts(status.getEc2Accounts());
-//        defaultAmazonAccountsSynchronizer.synchronize
         AmazonProviderUtils.AmazonAccountsSynchronizer(
                 credentialsLoader,
                 credentialsConfig,
@@ -174,24 +164,6 @@ class AmazonPollingSynchronizer {
         }
 
         lastSyncTime = response.bookmark;
-    }
-
-    private Response queryRemoteAccountProvider() {
-        Response response;
-        if (lastSyncTime == null) {
-            response = restTemplate.getForObject("http://localhost:8080/hello", Response.class);
-        } else {
-            response = restTemplate.getForObject("http://localhost:8080/hello?after=" + lastSyncTime.toString(), Response.class);
-            if (response.accounts == null && response.bookmark != null) {
-                lastSyncTime = response.bookmark;
-                return response;
-            }
-            if (response.bookmark == null) {
-                log.error("Response from remote host did not contain a valid marker");
-                return response;
-            }
-        }
-        return response;
     }
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {

@@ -38,7 +38,7 @@ import org.springframework.context.ApplicationContext
 import java.util.concurrent.ExecutorService
 
 class AmazonAwsProviderSynchronizer {
-    public void synchronizeAwsProvider(AwsProvider awsProvider,
+    void synchronizeAwsProvider(AwsProvider awsProvider,
                                         AmazonCloudProvider amazonCloudProvider,
                                         AmazonClientProvider amazonClientProvider,
                                         AmazonS3DataProvider amazonS3DataProvider,
@@ -116,7 +116,7 @@ class AmazonAwsProviderSynchronizer {
         awsProvider.synchronizeHealthAgents()
     }
 
-    public static void synchronizeReservationReportCachingAgentAccounts(AwsProvider awsProvider,
+    static void synchronizeReservationReportCachingAgentAccounts(AwsProvider awsProvider,
                                                                          Collection<NetflixAmazonCredentials> allAccounts) {
         ReservationReportCachingAgent reservationReportCachingAgent = awsProvider.agents.find { agent ->
             agent instanceof ReservationReportCachingAgent
