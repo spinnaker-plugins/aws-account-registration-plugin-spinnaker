@@ -30,7 +30,6 @@ public class Account {
     private List<String> regions;
     private List<String> providers;
     private Boolean enabled;
-    private List<String> Regions;
 
     private String type;
     private Long deletedAt;
