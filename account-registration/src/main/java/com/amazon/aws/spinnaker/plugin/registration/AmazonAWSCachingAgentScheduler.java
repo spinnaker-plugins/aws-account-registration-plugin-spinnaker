@@ -57,7 +57,7 @@ public class AmazonAWSCachingAgentScheduler {
         this.dynamicConfigService = dynamicConfigService;
     }
 
-    @Scheduled(fixedDelayString= "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
+    @Scheduled(fixedDelayString = "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
     public void synchronizeAwsProvider() {
         AmazonProviderUtils.synchronizeAwsProvider(awsProvider, amazonCloudProvider, amazonClientProvider,
                 amazonS3DataProvider, lazyLoadCredentialsRepository, objectMapper, eddaApiFactory, ctx,

@@ -27,6 +27,7 @@ public class Response {
     Response() {
         this.accounts = new ArrayList<>();
     }
+
     List<Account> accounts;
     Long bookmark;
 }

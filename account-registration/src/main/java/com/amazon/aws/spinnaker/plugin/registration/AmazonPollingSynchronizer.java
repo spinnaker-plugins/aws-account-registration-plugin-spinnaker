@@ -84,7 +84,7 @@ class AmazonPollingSynchronizer {
         this.catsModule = catsModule;
     }
 
-    @Scheduled(fixedDelayString = "${accountProvision.pullFrequencyInMilliSeconds:10000}" )
+    @Scheduled(fixedDelayString = "${accountProvision.pullFrequencyInMilliSeconds:10000}")
     void schedule() {
         sync();
     }
