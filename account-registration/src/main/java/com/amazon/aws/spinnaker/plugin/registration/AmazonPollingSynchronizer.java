@@ -92,14 +92,13 @@ class AmazonPollingSynchronizer {
     @PostConstruct
     void sync() {
         // Get accounts from remote
-        System.out.println(accountRegistrationProperties.getUrl());
         Response response;
         response = getResourceFromRemoteHost(accountRegistrationProperties.getUrl());
         if (response == null) {
             return;
         }
         // convert to credentialsConfig from received response.
-        AccountsStatus status = ConvertCredentials(response.accounts);
+        AccountsStatus status = convertCredentials(response.accounts);
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
@@ -195,7 +194,7 @@ class AmazonPollingSynchronizer {
         return ec2Account;
     }
 
-    private AccountsStatus ConvertCredentials(List<Account> accounts) {
+    private AccountsStatus convertCredentials(List<Account> accounts) {
         AccountsStatus status = new AccountsStatus();
         // in case duplicate account names were given.
         List<String> processed = new ArrayList<>();

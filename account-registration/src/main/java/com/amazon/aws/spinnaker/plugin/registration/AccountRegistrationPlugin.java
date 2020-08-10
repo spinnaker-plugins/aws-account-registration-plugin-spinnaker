@@ -24,6 +24,10 @@ import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @Slf4j
 public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
 
@@ -33,27 +37,24 @@ public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
 
     @Override
     public void registerBeanDefinitions(BeanDefinitionRegistry registry) {
-        BeanDefinition pollingBeanDefinition = beanDefinitionFor(AmazonPollingSynchronizer.class);
-        BeanDefinition amazonCachingAgentScheduler = beanDefinitionFor(AmazonCachingAgentScheduler.class);
-        BeanDefinition accountCredentialsProperties = beanDefinitionFor(AccountRegistrationProperties.class);
         BeanDefinition lazyLoadCredentialsRepositoryDefinition = primaryBeanDefinitionFor(LazyLoadCredentialsRepository.class);
-
-        try {
-            log.debug("Registering bean: {}", pollingBeanDefinition.getBeanClassName());
-            registerBean(pollingBeanDefinition, registry);
-            registerBean(amazonCachingAgentScheduler, registry);
-            registerBean(accountCredentialsProperties, registry);
-
-        } catch (ClassNotFoundException e) {
-            log.error("Could not register bean {}", pollingBeanDefinition.getBeanClassName());
-        }
-
         try {
             log.debug("Registering bean: {}", lazyLoadCredentialsRepositoryDefinition.getBeanClassName());
             registry.registerBeanDefinition("accountCredentialsRepository", lazyLoadCredentialsRepositoryDefinition);
-//            registerBean(pollingBeanDefinition, registry);
         } catch (BeanDefinitionStoreException e) {
             log.error("Could not register bean {}", lazyLoadCredentialsRepositoryDefinition.getBeanClassName());
+        }
+        List<Class> classes = new ArrayList<>(Arrays.asList(AmazonPollingSynchronizer.class,
+                AccountRegistrationProperties.class, AmazonEC2InfraCachingAgentScheduler.class,
+                AmazonAWSCachingAgentScheduler.class, AmazonECSCachingAgentScheduler.class));
+        for (Class calssToAdd : classes) {
+            BeanDefinition beanDefinition = beanDefinitionFor(calssToAdd);
+            try {
+                log.debug("Registering bean: {}", beanDefinition.getBeanClassName());
+                registerBean(beanDefinition, registry);
+            } catch (ClassNotFoundException e) {
+                log.error("Could not register bean {}", beanDefinition.getBeanClassName());
+            }
         }
     }
 
