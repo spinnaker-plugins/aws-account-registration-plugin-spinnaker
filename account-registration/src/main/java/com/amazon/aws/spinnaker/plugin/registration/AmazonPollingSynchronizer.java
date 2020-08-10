@@ -99,32 +99,7 @@ class AmazonPollingSynchronizer {
         }
         // convert to credentialsConfig from received response.
         AccountsStatus status = convertCredentials(response.accounts);
-        // Always use external source as credentials repo's correct state.
-        // TODO: need a better way to check for account existence in current credentials repo.
-        for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
-            boolean add = true;
-            for (CredentialsConfig.Account sourceAccount : status.getEc2Accounts()) {
-                if (currentAccount.getName().equals(sourceAccount.getName())) {
-                    add = false;
-                    break;
-                }
-            }
-            if (add) {
-                status.getEc2Accounts().add(currentAccount);
-            }
-        }
-        for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
-            boolean add = true;
-            for (ECSCredentialsConfig.Account sourceAccount : status.getEcsAccounts()) {
-                if (currentECSAccount.getName().equals(sourceAccount.getName())) {
-                    add = false;
-                    break;
-                }
-            }
-            if (add) {
-                status.getEcsAccounts().add(currentECSAccount);
-            }
-        }
+        buildDesiredAccountConfig(status);
         // Sync Amazon credentials in repo
         // CANNOT use defaultAmazonAccountsSynchronizer. Otherwise it will remove ECS accounts everytime there is a change
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
@@ -251,11 +226,44 @@ class AmazonPollingSynchronizer {
             log.error("Response from remote host did not contain a valid marker");
             return null;
         }
-        if (response != null && response.accounts == null && response.bookmark != null) {
+        if (response != null && response.accounts == null) {
             lastSyncTime = response.bookmark;
             return null;
         }
         return response;
+    }
+
+    private void buildDesiredAccountConfig(AccountsStatus status) {
+        // Always use external source as credentials repo's correct state.
+        // TODO: need a better way to check for account existence in current credentials repo.
+        List<CredentialsConfig.Account> ec2Accounts = status.getEc2Accounts();
+        List<ECSCredentialsConfig.Account> ecsAccounts = status.getEcsAccounts();
+        for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
+            boolean add = true;
+            for (CredentialsConfig.Account sourceAccount : ec2Accounts) {
+                if (currentAccount.getName().equals(sourceAccount.getName())) {
+                    add = false;
+                    break;
+                }
+            }
+            if (add) {
+                ec2Accounts.add(currentAccount);
+            }
+        }
+        for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
+            boolean add = true;
+            for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts) {
+                if (currentECSAccount.getName().equals(sourceAccount.getName())) {
+                    add = false;
+                    break;
+                }
+            }
+            if (add) {
+                ecsAccounts.add(currentECSAccount);
+            }
+        }
+        status.setEc2Accounts(ec2Accounts);
+        status.setEcsAccounts(ecsAccounts);
     }
 
 }
