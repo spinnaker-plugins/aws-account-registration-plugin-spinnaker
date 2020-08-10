@@ -23,11 +23,6 @@ repositories {
   maven { url "http://dl.bintray.com/spinnaker/spinnaker/" }
 }
 
-//sourceSets {
-//  main.java.srcDirs = []
-//  main.groovy.srcDirs += [ 'src/main/java']
-//  main.kotlin.srcDirs = ['src/main/kotlin']
-//}
 sourceSets.main.java.srcDirs = []
 sourceSets.main.groovy.srcDirs += ["src/main/java"]
 
