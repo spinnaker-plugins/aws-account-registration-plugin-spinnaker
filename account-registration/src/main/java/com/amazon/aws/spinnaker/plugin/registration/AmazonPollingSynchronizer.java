@@ -214,16 +214,12 @@ class AmazonPollingSynchronizer {
     }
 
     private Response getResourceFromRemoteHost(String url) {
+        log.debug("Getting account information from {}.", url );
         Response response;
         if (lastSyncTime != null) {
             url = String.format("%s?after=%s", url, lastSyncTime.toString());
         }
-        try {
-            response = restTemplate.getForObject(url, Response.class);
-        } catch (RestClientException e) {
-            log.error("Unable to retrieve account information from remote host. {}", e.getMessage());
-            return null;
-        }
+        response = restTemplate.getForObject(url, Response.class);
         if (response != null && response.bookmark == null) {
             log.error("Response from remote host did not contain a valid marker");
             return null;
