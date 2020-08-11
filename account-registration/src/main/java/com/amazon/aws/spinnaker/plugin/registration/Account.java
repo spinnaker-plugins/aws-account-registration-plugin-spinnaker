@@ -36,7 +36,7 @@ public class Account {
     @JsonProperty("SpinnakerProviders")
     private List<String> providers;  // required.
     @JsonProperty("SpinnakerEnabled")
-    private Boolean enabled;  // required.
+    private Boolean enabled = false;  // required.
     // Optional
     @JsonProperty("DeletedAt")
     private Long deletedAt;
