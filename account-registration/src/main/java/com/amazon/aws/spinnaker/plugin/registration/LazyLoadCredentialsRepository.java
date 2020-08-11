@@ -35,7 +35,6 @@ class LazyLoadCredentialsRepository extends MapBackedAccountCredentialsRepositor
 
     @Override
     public AccountCredentials getOne(String key) {
-        synchronizer.sync();
         AccountCredentials cred = super.getOne(key);
         if (cred == null) {
             log.info("Could not find account, {}. Checking remote repository.", key);
