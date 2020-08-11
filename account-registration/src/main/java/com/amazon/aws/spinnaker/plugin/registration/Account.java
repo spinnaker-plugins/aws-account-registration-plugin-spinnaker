@@ -24,12 +24,12 @@ import java.util.List;
 
 @Data
 public class Account {
-    private String name;
-    private String accountId;
-    private String assumeRole;
-    private List<String> regions;
-    private List<String> providers;
-    private Boolean enabled;
+    private String name; // required. MUST be unique.
+    private String accountId;  // required.
+    private String assumeRole;  // required.
+    private List<String> regions;  // required.
+    private List<String> providers;  // required.
+    private Boolean enabled;  // required.
 
     private String type;
     private Long deletedAt;
