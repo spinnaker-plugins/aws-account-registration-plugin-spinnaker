@@ -80,8 +80,8 @@ public class Response {
             }
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
-            if (account.getEnabled()) {
-                ec2Account.setEnabled(true);
+            if (account.getEnabled() != null) {
+                ec2Account.setEnabled(account.getEnabled());
             }
             if (account.getProviders().isEmpty()) {
                 // enable ecs, and lambda
@@ -95,12 +95,12 @@ public class Response {
             for (String provider : account.getProviders()) {
                 if ("lambda".equals(provider)) {
                     ec2Account.setLambdaEnabled(true);
-                    break;
+                    continue;
                 }
                 if ("ecs".equals(provider)) {
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
-                    break;
+                    continue;
                 }
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);
