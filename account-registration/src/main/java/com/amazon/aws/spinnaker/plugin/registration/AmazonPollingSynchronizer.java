@@ -215,7 +215,7 @@ class AmazonPollingSynchronizer {
     private Response getResourceFromRemoteHost(String url) {
         Response response;
         if (lastSyncTime != null) {
-            url = url + "?after=" + lastSyncTime.toString();
+            url = String.format("%s?after=%s", url, lastSyncTime.toString());
         }
         try {
             response = restTemplate.getForObject(url, Response.class);
@@ -266,4 +266,3 @@ class AmazonPollingSynchronizer {
     }
 
 }
-
