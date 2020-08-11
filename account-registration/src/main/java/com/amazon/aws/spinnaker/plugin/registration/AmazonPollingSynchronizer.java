@@ -156,16 +156,17 @@ class AmazonPollingSynchronizer {
             regionToAdd.setName(region);
             regions.add(regionToAdd);
         }
-        CredentialsConfig.Account ec2Account = new CredentialsConfig.Account();
-        ec2Account.setName(account.getName());
-        ec2Account.setAccountId(account.getAccountId());
-        ec2Account.setAssumeRole(account.getAssumeRole());
-        ec2Account.setRegions(regions);
-        ec2Account.setAccountType(account.getType());
-        ec2Account.setPermissions(account.getPermissions());
-        ec2Account.setEnvironment(account.getEnvironment());
-        ec2Account.setDefaultKeyPair(account.getDefaultKeyPair());
-        ec2Account.setDefaultSecurityGroups(account.getDefaultSecurityGroups());
+        CredentialsConfig.Account ec2Account = new CredentialsConfig.Account() {{
+            setName(account.getName());
+            setAccountId(account.getAccountId());
+            setAssumeRole(account.getAssumeRole());
+            setRegions(regions);
+            setAccountType(account.getType());
+            setPermissions(account.getPermissions());
+            setEnvironment(account.getEnvironment());
+            setDefaultKeyPair(account.getDefaultKeyPair());
+            setDefaultSecurityGroups(account.getDefaultSecurityGroups());
+        }};
         return ec2Account;
     }
 
