@@ -114,21 +114,4 @@ public final class EcsProviderUtils {
         }
         ProviderUtils.unscheduleAndDeregisterAgents(namesOfDeletedAccounts, catsModule);
     }
-
-//    private <T, L extends List<T>> List<T> doSafeCast(Object listObject,
-//                                                      Class<T> type,
-//                                                      Class<L> listClass) {
-//        List<T> result = listClass.newInstance();
-//
-//        if (listObject instanceof List) {
-//            List<?> list = (List<?>) listObject;
-//
-//            for (Object obj : list) {
-//                if (type.isInstance(obj)) {
-//                    result.add(type.cast(obj));
-//                }
-//            }
-//        }
-//        return result;
-//    }
 }
