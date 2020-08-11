@@ -32,12 +32,10 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 
 @Component
@@ -104,7 +102,7 @@ class AmazonPollingSynchronizer {
         // CANNOT use defaultAmazonAccountsSynchronizer. Otherwise it will remove ECS accounts everytime there is a change
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
         // ProviderUtils.calculateAccountDeltas()
-        credentialsConfig.setAccounts(status.getEc2Accounts());
+        credentialsConfig.setAccounts(status.getEC2AccountsAsList());
         AmazonProviderUtils.AmazonAccountsSynchronizer(
                 credentialsLoader,
                 credentialsConfig,
@@ -113,7 +111,7 @@ class AmazonPollingSynchronizer {
                 catsModule
         );
         // Sync ECS credentials in repo
-        ecsCredentialsConfig.setAccounts(status.getEcsAccounts());
+        ecsCredentialsConfig.setAccounts(status.getECSAccountsAsList());
         try {
             EcsProviderUtils.synchronizeEcsAccounts(lazyLoadCredentialsRepository, credentialsLoader,
                     ecsCredentialsConfig, catsModule);
@@ -142,7 +140,7 @@ class AmazonPollingSynchronizer {
     }
 
     private Response getResourceFromRemoteHost(String url) {
-        log.debug("Getting account information from {}.", url );
+        log.debug("Getting account information from {}.", url);
         Response response;
         if (lastSyncTime != null) {
             url = String.format("%s?after=%s", url, lastSyncTime.toString());
@@ -162,28 +160,28 @@ class AmazonPollingSynchronizer {
     private void buildDesiredAccountConfig(AccountsStatus status) {
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
-        List<CredentialsConfig.Account> ec2Accounts = status.getEc2Accounts();
-        List<ECSCredentialsConfig.Account> ecsAccounts = status.getEcsAccounts();
+        HashMap<String, CredentialsConfig.Account> ec2Accounts = status.getEc2Accounts();
+        HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = status.getEcsAccounts();
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
-            for (CredentialsConfig.Account sourceAccount : ec2Accounts) {
+            for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
                 if (currentAccount.getName().equals(sourceAccount.getName())) {
                     currentAccount = null;
                     break;
                 }
             }
             if (currentAccount != null) {
-                ec2Accounts.add(currentAccount);
+                ec2Accounts.put(currentAccount.getName(), currentAccount);
             }
         }
         for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
-            for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts) {
+            for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts.values()) {
                 if (currentECSAccount.getName().equals(sourceAccount.getName())) {
                     currentECSAccount = null;
                     break;
                 }
             }
             if (currentECSAccount != null) {
-                ecsAccounts.add(currentECSAccount);
+                ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
             }
         }
         status.setEc2Accounts(ec2Accounts);

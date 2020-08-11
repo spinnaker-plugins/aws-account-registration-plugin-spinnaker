@@ -21,11 +21,25 @@ import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Data
 public class AccountsStatus {
-    public List<CredentialsConfig.Account> ec2Accounts;
-    public List<ECSCredentialsConfig.Account> ecsAccounts;
+    public HashMap<String, CredentialsConfig.Account> ec2Accounts;
+    public HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     public List<String> deletedAccounts;
+
+    public List<CredentialsConfig.Account> getEC2AccountsAsList() {
+        List<CredentialsConfig.Account> desiredEc2Accounts = new ArrayList<>();
+        desiredEc2Accounts.addAll(ec2Accounts.values());
+        return desiredEc2Accounts;
+    }
+
+    public List<ECSCredentialsConfig.Account> getECSAccountsAsList() {
+        List<ECSCredentialsConfig.Account> desiredEcsAccounts = new ArrayList<>();
+        desiredEcsAccounts.addAll(ecsAccounts.values());
+        return desiredEcsAccounts;
+    }
 }

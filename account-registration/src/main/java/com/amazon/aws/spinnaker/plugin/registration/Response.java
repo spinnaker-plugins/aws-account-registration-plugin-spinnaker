@@ -22,6 +22,7 @@ import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Data
@@ -65,12 +66,12 @@ public class Response {
     private AccountsStatus convertCredentials(List<Account> accounts) {
         AccountsStatus status = new AccountsStatus();
         // in case duplicate account names were given.
-        List<String> processed = new ArrayList<>();
-        List<CredentialsConfig.Account> ec2AccountsToAdd = new ArrayList<>();
-        List<ECSCredentialsConfig.Account> ecsAccountsToAdd = new ArrayList<>();
+        HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
+        HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
         for (Account account : accounts) {
-            if (processed.contains(account.getName())) {
+            CredentialsConfig.Account exists = ec2Accounts.get(account.getName());
+            if (exists != null) {
                 continue;
             }
             if (account.getDeletedAt() != null && account.getDeletedAt() != 0) {
@@ -81,9 +82,9 @@ public class Response {
             if (account.getProviders().isEmpty()) {
                 // enable ecs, and lambda
                 ec2Account.setLambdaEnabled(true);
-                ec2AccountsToAdd.add(ec2Account);
-                ecsAccountsToAdd.add(makeECSAccount(account));
-                processed.add(account.getName());
+                ec2Accounts.put(ec2Account.getName(), ec2Account);
+                ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
+                ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                 continue;
             }
             for (String provider : account.getProviders()) {
@@ -92,16 +93,16 @@ public class Response {
                     break;
                 }
                 if ("ecs".equals(provider)) {
-                    ecsAccountsToAdd.add(makeECSAccount(account));
+                    ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
+                    ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                     break;
                 }
             }
-            ec2AccountsToAdd.add(ec2Account);
-            processed.add(account.getName());
+            ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
         status.setDeletedAccounts(deletedAccounts);
-        status.setEc2Accounts(ec2AccountsToAdd);
-        status.setEcsAccounts(ecsAccountsToAdd);
+        status.setEc2Accounts(ec2Accounts);
+        status.setEcsAccounts(ecsAccounts);
         return status;
     }
 
