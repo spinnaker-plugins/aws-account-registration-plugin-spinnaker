@@ -1,6 +1,24 @@
 ## Spinnaker Plugin for Dynamic Account Registration
 
-Available configuration properties:
+###Usage
+1. Run `./gradlew releaseBundle` in the root of this project. 
+2. The above command will create a zip file, `build/distributions/spinnaker-aws-account-registration*.zip`.
+3. Copy the zip file to Clouddriver plugin directory. Defaults to `/opt/clouddriver/plugins`. This directory can be 
+specified by the `plugins-root-path` configuration property.
+4. Enable the plugin by placing the following in [Clouddriver profile](https://spinnaker.io/reference/halyard/custom/#custom-profiles)
+
+```yaml
+spinnaker:
+  extensibility:
+    plugins-root-path: /opt/clouddriver/plugins
+    plugins:
+      AWS.AccountRegistration:
+        enabled: true
+    repositories: {}
+    strict-plugin-loading: false
+```
+
+###Available configuration properties:
 ```yaml
 account-provision:
   url: 'http://localhost:8080/hello' # Remote host address. 
