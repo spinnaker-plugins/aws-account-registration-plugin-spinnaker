@@ -240,26 +240,24 @@ class AmazonPollingSynchronizer {
         List<CredentialsConfig.Account> ec2Accounts = status.getEc2Accounts();
         List<ECSCredentialsConfig.Account> ecsAccounts = status.getEcsAccounts();
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
-            boolean add = true;
             for (CredentialsConfig.Account sourceAccount : ec2Accounts) {
                 if (currentAccount.getName().equals(sourceAccount.getName())) {
-                    add = false;
+                    currentAccount = null;
                     break;
                 }
             }
-            if (add) {
+            if (currentAccount != null) {
                 ec2Accounts.add(currentAccount);
             }
         }
         for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
-            boolean add = true;
             for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts) {
                 if (currentECSAccount.getName().equals(sourceAccount.getName())) {
-                    add = false;
+                    currentECSAccount = null;
                     break;
                 }
             }
-            if (add) {
+            if (currentECSAccount != null) {
                 ecsAccounts.add(currentECSAccount);
             }
         }
