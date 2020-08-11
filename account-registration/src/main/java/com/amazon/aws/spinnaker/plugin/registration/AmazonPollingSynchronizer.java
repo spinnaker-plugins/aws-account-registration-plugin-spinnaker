@@ -123,7 +123,6 @@ class AmazonPollingSynchronizer {
         }
         // EcsAccountMapper is normally initialized and never refreshed. Need to refresh here.
         try {
-//            EcsProviderUtils.synchronizeEcsCredentialsMapper(ecsAccountMapper, lazyLoadCredentialsRepository);
             // Cannot autowire EcsAccountMapper for some reason. It returns every field wth null values.
             // Doing it this way is a problem.
             if (this.ecsAccountMapper == null) {

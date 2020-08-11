@@ -56,11 +56,8 @@ public class Response {
             setAccountId(account.getAccountId());
             setAssumeRole(account.getAssumeRole());
             setRegions(regions);
-            setAccountType(account.getType());
             setPermissions(account.getPermissions());
             setEnvironment(account.getEnvironment());
-            setDefaultKeyPair(account.getDefaultKeyPair());
-            setDefaultSecurityGroups(account.getDefaultSecurityGroups());
         }};
         return ec2Account;
     }

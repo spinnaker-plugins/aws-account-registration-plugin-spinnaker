@@ -17,6 +17,7 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.fiat.model.resources.Permissions;
 import lombok.Data;
 
@@ -24,18 +25,37 @@ import java.util.List;
 
 @Data
 public class Account {
+    @JsonProperty("AccountName")
     private String name; // required. MUST be unique.
+    @JsonProperty("AccountId")
     private String accountId;  // required.
+    @JsonProperty("SpinnakerAssumeRole")
     private String assumeRole;  // required.
+    @JsonProperty("Regions")
     private List<String> regions;  // required.
+    @JsonProperty("SpinnakerProviders")
     private List<String> providers;  // required.
+    @JsonProperty("SpinnakerEnabled")
     private Boolean enabled;  // required.
-
-    private String type;
+    // Optional
+    @JsonProperty("DeletedAt")
     private Long deletedAt;
+    @JsonProperty("Permissions")
     private Permissions.Builder permissions;
+    @JsonProperty("Environment")
     private String environment;
-    private String defaultKeyPair;
-    private List<String> defaultSecurityGroups;
-
+    @JsonProperty("AccountArn")
+    private String accountArn;
+    @JsonProperty("AccountEmail")
+    private String accountEmail;
+    @JsonProperty("Profile")
+    private String profile;
+    @JsonProperty("ServiceId")
+    private String serviceId;
+    @JsonProperty("Status")
+    private String status;
+    @JsonProperty("CreatedAt")
+    private String createdAt;
+    @JsonProperty("UpdatedAt")
+    private String updatedAt;
 }
