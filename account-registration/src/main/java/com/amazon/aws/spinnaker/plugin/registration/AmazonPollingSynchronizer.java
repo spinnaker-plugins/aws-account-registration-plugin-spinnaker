@@ -37,6 +37,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
+import java.util.List;
 
 
 @Component
@@ -162,9 +163,10 @@ class AmazonPollingSynchronizer {
         // TODO: need a better way to check for account existence in current credentials repo.
         HashMap<String, CredentialsConfig.Account> ec2Accounts = status.getEc2Accounts();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = status.getEcsAccounts();
+        List<String> deletedAccounts = status.getDeletedAccounts();
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
             for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
-                if (currentAccount.getName().equals(sourceAccount.getName())) {
+                if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
                     currentAccount = null;
                     break;
                 }
@@ -175,7 +177,7 @@ class AmazonPollingSynchronizer {
         }
         for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
             for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts.values()) {
-                if (currentECSAccount.getName().equals(sourceAccount.getName())) {
+                if (currentECSAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentECSAccount.getAwsAccount())) {
                     currentECSAccount = null;
                     break;
                 }

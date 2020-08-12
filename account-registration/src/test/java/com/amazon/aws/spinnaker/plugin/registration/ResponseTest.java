@@ -49,7 +49,7 @@ public class ResponseTest {
         for (Map.Entry<String, Account> entry : accounts.entrySet()) {
             Account sourceInfo = entry.getValue();
             String sourceAccountName = entry.getKey();
-            if ("SUSPENDED".equals(sourceInfo.getStatus())) {
+            if ("SUSPENDED".equals(sourceInfo.getStatus()) || sourceInfo.getProviders().isEmpty() || sourceInfo.getProviders() == null) {
                 assertTrue(status.getDeletedAccounts().contains(sourceInfo.getName()));
                 continue;
             }
@@ -65,14 +65,6 @@ public class ResponseTest {
                 sourceInfo.setAssumeRole(String.format("role/%s", assumeRoleString));
             }
             assertEquals(sourceInfo.getAssumeRole(), ec2Account.getAssumeRole());
-            if (sourceInfo.getProviders().isEmpty()) {
-                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(sourceAccountName + "-ecs");
-                assertAll( "All providers should be enabled",
-                        () -> assertTrue(ec2Account.getLambdaEnabled()),
-                        () ->assertNotNull(ecsAccount),
-                        () -> assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount())
-                        );
-            }
 
             if (sourceInfo.getProviders().contains("lambda")) {
                 assertTrue(ec2Account.getLambdaEnabled());

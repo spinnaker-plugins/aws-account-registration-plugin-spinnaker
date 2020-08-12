@@ -76,7 +76,7 @@ public class Response {
             if (exists != null) {
                 continue;
             }
-            if ("SUSPENDED".equals(account.getStatus())) {
+            if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
                 deletedAccounts.add(account.getName());
                 continue;
             }
@@ -84,14 +84,6 @@ public class Response {
             ec2Account.setLambdaEnabled(false);
             if (account.getEnabled() != null) {
                 ec2Account.setEnabled(account.getEnabled());
-            }
-            if (account.getProviders().isEmpty()) {
-                // enable ecs, and lambda
-                ec2Account.setLambdaEnabled(true);
-                ec2Accounts.put(ec2Account.getName(), ec2Account);
-                ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
-                ecsAccounts.put(ecsAccount.getName(), ecsAccount);
-                continue;
             }
             for (String provider : account.getProviders()) {
                 if ("lambda".equals(provider)) {
