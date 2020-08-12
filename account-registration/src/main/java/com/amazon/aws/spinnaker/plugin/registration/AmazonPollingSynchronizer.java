@@ -27,6 +27,7 @@ import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
@@ -44,7 +45,8 @@ import java.util.HashMap;
 class AmazonPollingSynchronizer {
     private Long lastSyncTime;
     private final RestTemplate restTemplate;
-    private final AccountRegistrationProperties accountRegistrationProperties;
+    @Value("${accountProvision.url:http://localhost:8080}")
+    private String remoteHostUrl;
     // agent removal
     private final CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader;
     private final CredentialsConfig credentialsConfig;
@@ -63,8 +65,7 @@ class AmazonPollingSynchronizer {
             CredentialsConfig credentialsConfig,
             LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
             DefaultAccountConfigurationProperties defaultAccountConfigurationProperties,
-            ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext,
-            AccountRegistrationProperties accountRegistrationProperties
+            ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext
     ) {
         this.restTemplate = restTemplate;
         this.credentialsLoader = credentialsLoader;
@@ -73,7 +74,6 @@ class AmazonPollingSynchronizer {
         this.defaultAccountConfigurationProperties = defaultAccountConfigurationProperties;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.applicationContext = applicationContext;
-        this.accountRegistrationProperties = accountRegistrationProperties;
     }
 
     // circular dependency if not lazily loaded.
@@ -91,7 +91,7 @@ class AmazonPollingSynchronizer {
     void sync() {
         // Get accounts from remote
         Response response;
-        response = getResourceFromRemoteHost(accountRegistrationProperties.getUrl());
+        response = getResourceFromRemoteHost(remoteHostUrl);
         if (response == null) {
             return;
         }

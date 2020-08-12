@@ -45,7 +45,7 @@ public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
             log.error("Could not register bean {}", lazyLoadCredentialsRepositoryDefinition.getBeanClassName());
         }
         List<Class> classes = new ArrayList<>(Arrays.asList(AmazonPollingSynchronizer.class,
-                AccountRegistrationProperties.class, AmazonEC2InfraCachingAgentScheduler.class,
+                AmazonEC2InfraCachingAgentScheduler.class,
                 AmazonAWSCachingAgentScheduler.class, AmazonECSCachingAgentScheduler.class));
         for (Class calssToAdd : classes) {
             BeanDefinition beanDefinition = beanDefinitionFor(calssToAdd);
