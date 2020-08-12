@@ -39,10 +39,10 @@ public class Response {
     }
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
-return new ECSCredentialsConfig.Account() {{
-        setAwsAccount(account.getName());
-        setName(account.getName() + "-ecs");
-}};
+        return new ECSCredentialsConfig.Account() {{
+            setAwsAccount(account.getName());
+            setName(account.getName() + "-ecs");
+        }};
     }
 
     private CredentialsConfig.Account makeEC2Account(Account account) {
@@ -60,12 +60,14 @@ return new ECSCredentialsConfig.Account() {{
             setPermissions(account.getPermissions());
             setEnvironment(account.getEnvironment());
         }};
+        if (!account.getAssumeRole().startsWith("role/")) {
+            ec2Account.setAssumeRole(String.format("role/%s", account.getAssumeRole()));
+        }
         return ec2Account;
     }
 
     private AccountsStatus convertCredentials(List<Account> accounts) {
         AccountsStatus status = new AccountsStatus();
-        // in case duplicate account names were given.
         HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
@@ -74,7 +76,7 @@ return new ECSCredentialsConfig.Account() {{
             if (exists != null) {
                 continue;
             }
-            if (account.getDeletedAt() != null && account.getDeletedAt() != 0) {
+            if ("SUSPENDED".equals(account.getStatus())) {
                 deletedAccounts.add(account.getName());
                 continue;
             }
@@ -91,7 +93,6 @@ return new ECSCredentialsConfig.Account() {{
                 ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                 continue;
             }
-
             for (String provider : account.getProviders()) {
                 if ("lambda".equals(provider)) {
                     ec2Account.setLambdaEnabled(true);
@@ -100,7 +101,6 @@ return new ECSCredentialsConfig.Account() {{
                 if ("ecs".equals(provider)) {
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
-                    continue;
                 }
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);

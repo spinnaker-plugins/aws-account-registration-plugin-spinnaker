@@ -33,10 +33,13 @@ public class ResponseTest {
                 new ArrayList(Arrays.asList("us-west-2")), new ArrayList(Arrays.asList("ecs", "lambda", "ec2")), true));
         accounts.put("test2", new Account("test2", "2", "role/role2",
                 new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(), true));
-        accounts.put("test3", new Account("test3", "3", "role/role3",
+        accounts.put("test3", new Account("test3", "3", "role3",
                 new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(Arrays.asList("lambda", "ec2")), true));
         accounts.put("test4", new Account("test4", "4", "role/role4",
                 new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(Arrays.asList("lambda")), false));
+        accounts.put("test5", new Account("test5", "5", "role/role5",
+                new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(Arrays.asList("lambda")), false));
+        accounts.get("test5").setStatus("SUSPENDED");
 
         Response response = new Response();
         List<Account> accountList = new ArrayList<>();
@@ -44,27 +47,40 @@ public class ResponseTest {
         response.setAccounts(accountList);
         AccountsStatus status = response.getAccountStatus();
         for (Map.Entry<String, Account> entry : accounts.entrySet()) {
-            CredentialsConfig.Account ec2Account = status.getEc2Accounts().get(entry.getKey());
-            assertNotNull(ec2Account);
-            assertEquals(entry.getKey(), ec2Account.getName());
-            assertEquals(entry.getValue().getAccountId(), ec2Account.getAccountId());
-            assertEquals(entry.getValue().getAssumeRole(), ec2Account.getAssumeRole());
-            assertSame(entry.getValue().getEnabled(), ec2Account.getEnabled());
-
-            if (entry.getValue().getProviders().isEmpty()) {
-                assertTrue(ec2Account.getLambdaEnabled());
-                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(entry.getKey() + "-ecs");
-                assertNotNull(ecsAccount);
-                assertEquals(entry.getValue().getName(), ecsAccount.getAwsAccount());
+            Account sourceInfo = entry.getValue();
+            String sourceAccountName = entry.getKey();
+            if ("SUSPENDED".equals(sourceInfo.getStatus())) {
+                assertTrue(status.getDeletedAccounts().contains(sourceInfo.getName()));
+                continue;
+            }
+            CredentialsConfig.Account ec2Account = status.getEc2Accounts().get(sourceAccountName);
+            assertAll( "Should return required account information",
+                    () -> assertNotNull(ec2Account),
+                    () -> assertEquals(sourceAccountName, ec2Account.getName()),
+                    () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId()),
+                    () -> assertSame(sourceInfo.getEnabled(), ec2Account.getEnabled())
+            );
+            String assumeRoleString = sourceInfo.getAssumeRole();
+            if (!assumeRoleString.startsWith("role/")) {
+                sourceInfo.setAssumeRole(String.format("role/%s", assumeRoleString));
+            }
+            assertEquals(sourceInfo.getAssumeRole(), ec2Account.getAssumeRole());
+            if (sourceInfo.getProviders().isEmpty()) {
+                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(sourceAccountName + "-ecs");
+                assertAll( "All providers should be enabled",
+                        () -> assertTrue(ec2Account.getLambdaEnabled()),
+                        () ->assertNotNull(ecsAccount),
+                        () -> assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount())
+                        );
             }
 
-            if (entry.getValue().getProviders().contains("lambda")) {
+            if (sourceInfo.getProviders().contains("lambda")) {
                 assertTrue(ec2Account.getLambdaEnabled());
             }
-            if (entry.getValue().getProviders().contains("ecs")) {
-                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(entry.getKey() + "-ecs");
+            if (sourceInfo.getProviders().contains("ecs")) {
+                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(sourceAccountName + "-ecs");
                 assertNotNull(ecsAccount);
-                assertEquals(entry.getValue().getName(), ecsAccount.getAwsAccount());
+                assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount());
             }
         }
     }
