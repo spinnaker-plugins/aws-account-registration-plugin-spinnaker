@@ -1,6 +1,6 @@
 ## Spinnaker Plugin for Dynamic Account Registration
 
-###Usage
+### Usage
 1. Run `./gradlew releaseBundle` in the root of this project. 
 2. The above command will create a zip file, `build/distributions/spinnaker-aws-account-registration*.zip`.
 3. Copy the zip file to Clouddriver plugin directory. Defaults to `/opt/clouddriver/plugins`. This directory can be 
@@ -18,7 +18,7 @@ spinnaker:
     strict-plugin-loading: false
 ```
 
-###Available configuration properties:
+### Available configuration properties:
 ```yaml
 accountProvision:
   url: 'http://localhost:8080/hello' # Remote host address. 
