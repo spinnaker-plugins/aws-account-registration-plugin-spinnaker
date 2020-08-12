@@ -39,10 +39,10 @@ public class Response {
     }
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
-        ECSCredentialsConfig.Account ecsAccount = new ECSCredentialsConfig.Account();
-        ecsAccount.setAwsAccount(account.getName());
-        ecsAccount.setName(account.getName() + "-ecs");
-        return ecsAccount;
+return new ECSCredentialsConfig.Account() {{
+        setAwsAccount(account.getName());
+        setName(account.getName() + "-ecs");
+}};
     }
 
     private CredentialsConfig.Account makeEC2Account(Account account) {
