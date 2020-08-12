@@ -57,7 +57,7 @@ public class AmazonEC2InfraCachingAgentScheduler {
     }
 
     @Scheduled(fixedDelayString = "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
-    public void synchronizeAwsInfrastructureProvider() {
+    private void synchronizeAwsInfrastructureProvider() {
         AmazonProviderUtils.synchronizeAwsInfrastructureProvider(awsInfrastructureProvider, amazonClientProvider,
                 lazyLoadCredentialsRepository, amazonObjectMapper, registry, eddaTimeoutConfig);
     }

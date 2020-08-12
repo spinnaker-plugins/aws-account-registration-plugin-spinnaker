@@ -51,7 +51,7 @@ public class AmazonAWSCachingAgentScheduler {
     private final DynamicConfigService dynamicConfigService;
 
     @Autowired
-    public AmazonAWSCachingAgentScheduler(LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
+    private AmazonAWSCachingAgentScheduler(LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
                                           AmazonClientProvider amazonClientProvider,
                                           Registry registry, EddaTimeoutConfig eddaTimeoutConfig, AwsProvider awsProvider,
                                           AmazonCloudProvider amazonCloudProvider, AmazonS3DataProvider amazonS3DataProvider,
