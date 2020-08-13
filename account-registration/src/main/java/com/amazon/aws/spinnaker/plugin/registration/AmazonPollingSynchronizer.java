@@ -27,13 +27,11 @@ import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
@@ -44,10 +42,7 @@ import java.util.List;
 @DependsOn("netflixAmazonCredentials")
 @Slf4j
 class AmazonPollingSynchronizer {
-    private Long lastSyncTime;
-    private final RestTemplate restTemplate;
-    @Value("${accountProvision.url:http://localhost:8080}")
-    private String remoteHostUrl;
+    private final AccountsStatus accountsStatus;
     // agent removal
     private final CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader;
     private final CredentialsConfig credentialsConfig;
@@ -61,14 +56,14 @@ class AmazonPollingSynchronizer {
 
     @Autowired
     AmazonPollingSynchronizer(
-            RestTemplate restTemplate,
+            AccountsStatus accountsStatus,
             CredentialsLoader<? extends NetflixAmazonCredentials> credentialsLoader,
             CredentialsConfig credentialsConfig,
             LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
             DefaultAccountConfigurationProperties defaultAccountConfigurationProperties,
             ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext
     ) {
-        this.restTemplate = restTemplate;
+        this.accountsStatus = accountsStatus;
         this.credentialsLoader = credentialsLoader;
         this.credentialsConfig = credentialsConfig;
         this.lazyLoadCredentialsRepository = lazyLoadCredentialsRepository;
@@ -90,20 +85,15 @@ class AmazonPollingSynchronizer {
 
     @PostConstruct
     void sync() {
-        // Get accounts from remote
-        Response response;
-        response = getResourceFromRemoteHost(remoteHostUrl);
-        if (response == null) {
+        Boolean process = accountsStatus.getDesiredAccounts();
+        if (!process) {
             return;
         }
-        // convert to credentialsConfig from received response.
-        AccountsStatus status = response.getAccountStatus();
-        buildDesiredAccountConfig(status);
         // Sync Amazon credentials in repo
         // CANNOT use defaultAmazonAccountsSynchronizer. Otherwise it will remove ECS accounts everytime there is a change
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
         // ProviderUtils.calculateAccountDeltas()
-        credentialsConfig.setAccounts(status.getEC2AccountsAsList());
+        credentialsConfig.setAccounts(accountsStatus.getEC2AccountsAsList());
         AmazonProviderUtils.AmazonAccountsSynchronizer(
                 credentialsLoader,
                 credentialsConfig,
@@ -112,7 +102,7 @@ class AmazonPollingSynchronizer {
                 catsModule
         );
         // Sync ECS credentials in repo
-        ecsCredentialsConfig.setAccounts(status.getECSAccountsAsList());
+        ecsCredentialsConfig.setAccounts(accountsStatus.getECSAccountsAsList());
         try {
             EcsProviderUtils.synchronizeEcsAccounts(lazyLoadCredentialsRepository, credentialsLoader,
                     ecsCredentialsConfig, catsModule);
@@ -136,58 +126,24 @@ class AmazonPollingSynchronizer {
             log.error("Error obtaining EcsAccountMapper bean from Spring context.");
             return;
         }
-
-        lastSyncTime = response.bookmark;
+        accountsStatus.markSynced();
     }
 
-    private Response getResourceFromRemoteHost(String url) {
-        log.debug("Getting account information from {}.", url);
-        Response response;
-        if (lastSyncTime != null) {
-            url = String.format("%s?after=%s", url, lastSyncTime.toString());
-        }
-        response = restTemplate.getForObject(url, Response.class);
-        if (response != null && response.bookmark == null) {
-            log.error("Response from remote host did not contain a valid marker");
-            return null;
-        }
-        if (response != null && response.accounts == null) {
-            lastSyncTime = response.bookmark;
-            return null;
-        }
-        return response;
-    }
-
-    private void buildDesiredAccountConfig(AccountsStatus status) {
-        // Always use external source as credentials repo's correct state.
-        // TODO: need a better way to check for account existence in current credentials repo.
-        HashMap<String, CredentialsConfig.Account> ec2Accounts = status.getEc2Accounts();
-        HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = status.getEcsAccounts();
-        List<String> deletedAccounts = status.getDeletedAccounts();
-        for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
-            for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
-                if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
-                    currentAccount = null;
-                    break;
-                }
-            }
-            if (currentAccount != null) {
-                ec2Accounts.put(currentAccount.getName(), currentAccount);
-            }
-        }
-        for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
-            for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts.values()) {
-                if (currentECSAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentECSAccount.getAwsAccount())) {
-                    currentECSAccount = null;
-                    break;
-                }
-            }
-            if (currentECSAccount != null) {
-                ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
-            }
-        }
-        status.setEc2Accounts(ec2Accounts);
-        status.setEcsAccounts(ecsAccounts);
-    }
-
+//    private Response getResourceFromRemoteHost(String url) {
+//        log.debug("Getting account information from {}.", url);
+//        Response response;
+//        if (lastSyncTime != null) {
+//            url = String.format("%s?after=%s", url, lastSyncTime.toString());
+//        }
+//        response = restTemplate.getForObject(url, Response.class);
+//        if (response != null && response.bookmark == null) {
+//            log.error("Response from remote host did not contain a valid marker");
+//            return null;
+//        }
+//        if (response != null && response.accounts == null) {
+//            lastSyncTime = response.bookmark;
+//            return null;
+//        }
+//        return response;
+//    }
 }

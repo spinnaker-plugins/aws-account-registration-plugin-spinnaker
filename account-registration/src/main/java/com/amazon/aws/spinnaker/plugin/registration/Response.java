@@ -17,6 +17,8 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
@@ -27,16 +29,20 @@ import java.util.List;
 
 @Data
 public class Response {
+
     Response() {
         this.accounts = new ArrayList<>();
     }
 
+    @JsonProperty("accounts")
     List<Account> accounts;
     Long bookmark;
-
-    public AccountsStatus getAccountStatus() {
-        return convertCredentials(accounts);
-    }
+    @JsonIgnore
+    HashMap<String, CredentialsConfig.Account> ec2Accounts;
+    @JsonIgnore
+    HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
+    @JsonIgnore
+    List<String> deletedAccounts;
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
         return new ECSCredentialsConfig.Account() {{
@@ -66,8 +72,7 @@ public class Response {
         return ec2Account;
     }
 
-    private AccountsStatus convertCredentials(List<Account> accounts) {
-        AccountsStatus status = new AccountsStatus();
+    public void convertCredentials() {
         HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
@@ -97,10 +102,8 @@ public class Response {
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
-        status.setDeletedAccounts(deletedAccounts);
-        status.setEc2Accounts(ec2Accounts);
-        status.setEcsAccounts(ecsAccounts);
-        return status;
+        this.deletedAccounts = deletedAccounts;
+        this.ec2Accounts = ec2Accounts;
+        this.ecsAccounts = ecsAccounts;
     }
-
 }

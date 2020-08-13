@@ -46,9 +46,9 @@ public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
         }
         List<Class> classes = new ArrayList<>(Arrays.asList(AmazonPollingSynchronizer.class,
                 AmazonEC2InfraCachingAgentScheduler.class,
-                AmazonAWSCachingAgentScheduler.class, AmazonECSCachingAgentScheduler.class));
-        for (Class calssToAdd : classes) {
-            BeanDefinition beanDefinition = beanDefinitionFor(calssToAdd);
+                AmazonAWSCachingAgentScheduler.class, AmazonECSCachingAgentScheduler.class, AccountsStatus.class));
+        for (Class classToAdd : classes) {
+            BeanDefinition beanDefinition = beanDefinitionFor(classToAdd);
             try {
                 log.debug("Registering bean: {}", beanDefinition.getBeanClassName());
                 registerBean(beanDefinition, registry);
