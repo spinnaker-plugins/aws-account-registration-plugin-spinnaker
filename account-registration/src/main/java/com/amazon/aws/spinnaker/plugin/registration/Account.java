@@ -20,10 +20,12 @@ package com.amazon.aws.spinnaker.plugin.registration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.fiat.model.resources.Permissions;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 public class Account {
     @JsonProperty("AccountName")
     private String name; // required. MUST be unique.
