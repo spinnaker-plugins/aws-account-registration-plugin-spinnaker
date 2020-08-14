@@ -81,7 +81,6 @@ class AmazonPollingSynchronizer {
         sync();
     }
 
-    @PostConstruct
     void sync() {
         Boolean process = accountsStatus.getDesiredAccounts();
         if (!process) {
