@@ -36,6 +36,7 @@ public class Response {
 
     @JsonProperty("accounts")
     List<Account> accounts;
+    @JsonProperty("Bookmark")
     Long bookmark;
     @JsonIgnore
     HashMap<String, CredentialsConfig.Account> ec2Accounts;

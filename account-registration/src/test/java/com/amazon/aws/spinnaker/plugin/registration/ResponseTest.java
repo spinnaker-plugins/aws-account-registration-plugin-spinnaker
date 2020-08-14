@@ -45,15 +45,15 @@ public class ResponseTest {
         List<Account> accountList = new ArrayList<>();
         accountList.addAll(accounts.values());
         response.setAccounts(accountList);
-        AccountsStatus status = response.getAccountStatus();
+        response.convertCredentials();
         for (Map.Entry<String, Account> entry : accounts.entrySet()) {
             Account sourceInfo = entry.getValue();
             String sourceAccountName = entry.getKey();
             if ("SUSPENDED".equals(sourceInfo.getStatus()) || sourceInfo.getProviders().isEmpty() || sourceInfo.getProviders() == null) {
-                assertTrue(status.getDeletedAccounts().contains(sourceInfo.getName()));
+                assertTrue(response.getDeletedAccounts().contains(sourceInfo.getName()));
                 continue;
             }
-            CredentialsConfig.Account ec2Account = status.getEc2Accounts().get(sourceAccountName);
+            CredentialsConfig.Account ec2Account = response.getEc2Accounts().get(sourceAccountName);
             assertAll( "Should return required account information",
                     () -> assertNotNull(ec2Account),
                     () -> assertEquals(sourceAccountName, ec2Account.getName()),
@@ -70,7 +70,7 @@ public class ResponseTest {
                 assertTrue(ec2Account.getLambdaEnabled());
             }
             if (sourceInfo.getProviders().contains("ecs")) {
-                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(sourceAccountName + "-ecs");
+                ECSCredentialsConfig.Account ecsAccount = response.getEcsAccounts().get(sourceAccountName + "-ecs");
                 assertNotNull(ecsAccount);
                 assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount());
             }
