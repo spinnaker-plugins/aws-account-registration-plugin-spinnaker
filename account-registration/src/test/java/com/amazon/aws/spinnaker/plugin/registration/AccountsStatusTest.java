@@ -37,45 +37,77 @@ public class AccountsStatusTest {
     @Test
     public void testGetDesiredAccounts() {
         CredentialsConfig.Account ec2Account = new CredentialsConfig.Account() {{
-            setName("test1"); setAccountId("1"); setAssumeRole("role/role1");
-            setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{ setName("us-west-2"); }})));
-            setLambdaEnabled(false); setEnabled(true);
+            setName("test1");
+            setAccountId("1");
+            setAssumeRole("role/role1");
+            setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                setName("us-west-2");
+            }})));
+            setLambdaEnabled(false);
+            setEnabled(true);
         }};
         CredentialsConfig.Account removeAccount = new CredentialsConfig.Account() {{
-            setName("test9"); setAccountId("9"); setAssumeRole("role/role9");
-            setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{ setName("us-west-2"); }})));
-            setLambdaEnabled(true); setEnabled(true);
+            setName("test9");
+            setAccountId("9");
+            setAssumeRole("role/role9");
+            setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                setName("us-west-2");
+            }})));
+            setLambdaEnabled(true);
+            setEnabled(true);
         }};
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(
                     new CredentialsConfig.Account() {{
-                        setName("test1"); setAccountId("1"); setAssumeRole("role/role1");
-                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{ setName("us-west-2"); }})));
-                        setLambdaEnabled(false); setEnabled(true);
+                        setName("test1");
+                        setAccountId("1");
+                        setAssumeRole("role/role1");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(false);
+                        setEnabled(true);
                     }},
                     new CredentialsConfig.Account() {{
-                        setName("test9"); setAccountId("9"); setAssumeRole("role/role9");
-                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{ setName("us-west-2"); }})));
-                        setLambdaEnabled(true); setEnabled(true);
+                        setName("test9");
+                        setAccountId("9");
+                        setAssumeRole("role/role9");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(true);
+                        setEnabled(true);
                     }}
             )));
         }};
         ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
-                setName("test9-ecs"); setAwsAccount("test9");
+                setName("test9-ecs");
+                setAwsAccount("test9");
             }})));
         }};
 
         List<Account> correctAccounts = new ArrayList<Account>(Arrays.asList(
-                new Account() {{ setName("test1"); setAccountId("1"); setAssumeRole("role/role1-1");
-                    setRegions(new ArrayList(Arrays.asList("us-west-2"))); setEnabled(true);
-                    setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2"))); }},
-                new Account() {{ setName("test9"); setAccountId("9"); setAssumeRole("role/role9");
-                    setRegions(new ArrayList(Arrays.asList("us-west-2"))); setEnabled(true);
-                    setProviders(new ArrayList(Arrays.asList("ec2"))); setStatus("SUSPENDED");}}
+                new Account() {{
+                    setName("test1");
+                    setAccountId("1");
+                    setAssumeRole("role/role1-1");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setEnabled(true);
+                    setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+                }},
+                new Account() {{
+                    setName("test9");
+                    setAccountId("9");
+                    setAssumeRole("role/role9");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setEnabled(true);
+                    setProviders(new ArrayList(Arrays.asList("ec2")));
+                    setStatus("SUSPENDED");
+                }}
         ));
 
-        Response response = new Response(){{
+        Response response = new Response() {{
             setAccounts(correctAccounts);
             setBookmark(1234567890L);
         }};
@@ -98,10 +130,10 @@ public class AccountsStatusTest {
                 () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
                 () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
                 () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
-                );
+        );
         assertAll("Account should be removed",
                 () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
                 () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
-                );
+        );
     }
 }

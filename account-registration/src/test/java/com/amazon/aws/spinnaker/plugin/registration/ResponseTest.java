@@ -29,21 +29,47 @@ public class ResponseTest {
     @Test
     void TestGetAccountStatus() {
         HashMap<String, Account> accounts = new HashMap<>();
-        accounts.put("test1", new Account() {{ setName("test1"); setAccountId("1"); setAssumeRole("role/role1");
-                setRegions(new ArrayList(Arrays.asList("us-west-2"))); setEnabled(true);
-            setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));}});
-        accounts.put("test2", new Account() {{ setName("test2"); setAccountId("2"); setAssumeRole("role/role2");
-            setRegions(new ArrayList(Arrays.asList("us-west-2"))); setEnabled(true);
-            setProviders(new ArrayList()); }});
-        accounts.put("test3", new Account() {{ setName("test3"); setAccountId("3"); setAssumeRole("role/role3");
-            setRegions(new ArrayList<>(Arrays.asList("lambda", "ec2"))); setEnabled(true);
-            setProviders(new ArrayList());}});
-        accounts.put("test4", new Account() {{ setName("test4"); setAccountId("4"); setAssumeRole("role/role4");
-            setRegions(new ArrayList<>(Arrays.asList("lambda"))); setEnabled(true);
-            setProviders(new ArrayList()); }});
-        accounts.put("test5", new Account() {{ setName("test5"); setAccountId("5"); setAssumeRole("role/role5");
-            setRegions(new ArrayList<>(Arrays.asList("lambda"))); setEnabled(true); setStatus("SUSPENDED");
-            setProviders(new ArrayList()); }});
+        accounts.put("test1", new Account() {{
+            setName("test1");
+            setAccountId("1");
+            setAssumeRole("role/role1");
+            setRegions(new ArrayList(Arrays.asList("us-west-2")));
+            setEnabled(true);
+            setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+        }});
+        accounts.put("test2", new Account() {{
+            setName("test2");
+            setAccountId("2");
+            setAssumeRole("role/role2");
+            setRegions(new ArrayList(Arrays.asList("us-west-2")));
+            setEnabled(true);
+            setProviders(new ArrayList());
+        }});
+        accounts.put("test3", new Account() {{
+            setName("test3");
+            setAccountId("3");
+            setAssumeRole("role/role3");
+            setRegions(new ArrayList<>(Arrays.asList("lambda", "ec2")));
+            setEnabled(true);
+            setProviders(new ArrayList());
+        }});
+        accounts.put("test4", new Account() {{
+            setName("test4");
+            setAccountId("4");
+            setAssumeRole("role/role4");
+            setRegions(new ArrayList<>(Arrays.asList("lambda")));
+            setEnabled(true);
+            setProviders(new ArrayList());
+        }});
+        accounts.put("test5", new Account() {{
+            setName("test5");
+            setAccountId("5");
+            setAssumeRole("role/role5");
+            setRegions(new ArrayList<>(Arrays.asList("lambda")));
+            setEnabled(true);
+            setStatus("SUSPENDED");
+            setProviders(new ArrayList());
+        }});
 
         Response response = new Response();
         List<Account> accountList = new ArrayList<>();
@@ -58,7 +84,7 @@ public class ResponseTest {
                 continue;
             }
             CredentialsConfig.Account ec2Account = response.getEc2Accounts().get(sourceAccountName);
-            assertAll( "Should return required account information",
+            assertAll("Should return required account information",
                     () -> assertNotNull(ec2Account),
                     () -> assertEquals(sourceAccountName, ec2Account.getName()),
                     () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId()),
