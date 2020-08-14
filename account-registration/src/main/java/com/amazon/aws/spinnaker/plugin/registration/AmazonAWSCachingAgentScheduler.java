@@ -52,12 +52,12 @@ public class AmazonAWSCachingAgentScheduler {
 
     @Autowired
     private AmazonAWSCachingAgentScheduler(LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
-                                          AmazonClientProvider amazonClientProvider,
-                                          Registry registry, EddaTimeoutConfig eddaTimeoutConfig, AwsProvider awsProvider,
-                                          AmazonCloudProvider amazonCloudProvider, AmazonS3DataProvider amazonS3DataProvider,
-                                          ObjectMapper objectMapper, EddaApiFactory eddaApiFactory, ApplicationContext ctx,
-                                          Optional<ExecutorService> reservationReportPool, Collection<AgentProvider> agentProviders,
-                                          DynamicConfigService dynamicConfigService
+                                           AmazonClientProvider amazonClientProvider,
+                                           Registry registry, EddaTimeoutConfig eddaTimeoutConfig, AwsProvider awsProvider,
+                                           AmazonCloudProvider amazonCloudProvider, AmazonS3DataProvider amazonS3DataProvider,
+                                           ObjectMapper objectMapper, EddaApiFactory eddaApiFactory, ApplicationContext ctx,
+                                           Optional<ExecutorService> reservationReportPool, Collection<AgentProvider> agentProviders,
+                                           DynamicConfigService dynamicConfigService
     ) {
         this.lazyLoadCredentialsRepository = lazyLoadCredentialsRepository;
         this.amazonClientProvider = amazonClientProvider;

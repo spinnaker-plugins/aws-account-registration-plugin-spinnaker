@@ -60,17 +60,4 @@ public class Account {
     private String createdAt;
     @JsonProperty("UpdatedAt")
     private String updatedAt;
-    // Pagination
-    @JsonProperty("Pagination")
-    private AccountPagination pagination;
-
-    Account(String name, String accountId, String assumeRole, List<String> regions,
-            List<String> providers, Boolean enabled) {
-        this.name = name;
-        this.accountId = accountId;
-        this.assumeRole = assumeRole;
-        this.regions = regions;
-        this.providers = providers;
-        this.enabled = enabled;
-    }
 }

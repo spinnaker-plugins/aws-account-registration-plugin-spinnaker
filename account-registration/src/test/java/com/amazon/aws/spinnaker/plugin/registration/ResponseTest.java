@@ -29,32 +29,62 @@ public class ResponseTest {
     @Test
     void TestGetAccountStatus() {
         HashMap<String, Account> accounts = new HashMap<>();
-        accounts.put("test1", new Account("test1", "1", "role/role1",
-                new ArrayList(Arrays.asList("us-west-2")), new ArrayList(Arrays.asList("ecs", "lambda", "ec2")), true));
-        accounts.put("test2", new Account("test2", "2", "role/role2",
-                new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(), true));
-        accounts.put("test3", new Account("test3", "3", "role3",
-                new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(Arrays.asList("lambda", "ec2")), true));
-        accounts.put("test4", new Account("test4", "4", "role/role4",
-                new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(Arrays.asList("lambda")), false));
-        accounts.put("test5", new Account("test5", "5", "role/role5",
-                new ArrayList(Arrays.asList("us-west-2")), new ArrayList<String>(Arrays.asList("lambda")), false));
-        accounts.get("test5").setStatus("SUSPENDED");
+        accounts.put("test1", new Account() {{
+            setName("test1");
+            setAccountId("1");
+            setAssumeRole("role/role1");
+            setRegions(new ArrayList(Arrays.asList("us-west-2")));
+            setEnabled(true);
+            setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+        }});
+        accounts.put("test2", new Account() {{
+            setName("test2");
+            setAccountId("2");
+            setAssumeRole("role/role2");
+            setRegions(new ArrayList(Arrays.asList("us-west-2")));
+            setEnabled(true);
+            setProviders(new ArrayList());
+        }});
+        accounts.put("test3", new Account() {{
+            setName("test3");
+            setAccountId("3");
+            setAssumeRole("role/role3");
+            setRegions(new ArrayList<>(Arrays.asList("lambda", "ec2")));
+            setEnabled(true);
+            setProviders(new ArrayList());
+        }});
+        accounts.put("test4", new Account() {{
+            setName("test4");
+            setAccountId("4");
+            setAssumeRole("role/role4");
+            setRegions(new ArrayList<>(Arrays.asList("lambda")));
+            setEnabled(true);
+            setProviders(new ArrayList());
+        }});
+        accounts.put("test5", new Account() {{
+            setName("test5");
+            setAccountId("5");
+            setAssumeRole("role/role5");
+            setRegions(new ArrayList<>(Arrays.asList("lambda")));
+            setEnabled(true);
+            setStatus("SUSPENDED");
+            setProviders(new ArrayList());
+        }});
 
         Response response = new Response();
         List<Account> accountList = new ArrayList<>();
         accountList.addAll(accounts.values());
         response.setAccounts(accountList);
-        AccountsStatus status = response.getAccountStatus();
+        response.convertCredentials();
         for (Map.Entry<String, Account> entry : accounts.entrySet()) {
             Account sourceInfo = entry.getValue();
             String sourceAccountName = entry.getKey();
             if ("SUSPENDED".equals(sourceInfo.getStatus()) || sourceInfo.getProviders().isEmpty() || sourceInfo.getProviders() == null) {
-                assertTrue(status.getDeletedAccounts().contains(sourceInfo.getName()));
+                assertTrue(response.getDeletedAccounts().contains(sourceInfo.getName()));
                 continue;
             }
-            CredentialsConfig.Account ec2Account = status.getEc2Accounts().get(sourceAccountName);
-            assertAll( "Should return required account information",
+            CredentialsConfig.Account ec2Account = response.getEc2Accounts().get(sourceAccountName);
+            assertAll("Should return required account information",
                     () -> assertNotNull(ec2Account),
                     () -> assertEquals(sourceAccountName, ec2Account.getName()),
                     () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId()),
@@ -70,7 +100,7 @@ public class ResponseTest {
                 assertTrue(ec2Account.getLambdaEnabled());
             }
             if (sourceInfo.getProviders().contains("ecs")) {
-                ECSCredentialsConfig.Account ecsAccount = status.getEcsAccounts().get(sourceAccountName + "-ecs");
+                ECSCredentialsConfig.Account ecsAccount = response.getEcsAccounts().get(sourceAccountName + "-ecs");
                 assertNotNull(ecsAccount);
                 assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount());
             }
