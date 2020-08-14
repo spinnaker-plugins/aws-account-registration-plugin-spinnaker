@@ -34,8 +34,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
 
 
 @Component
@@ -128,22 +126,4 @@ class AmazonPollingSynchronizer {
         }
         accountsStatus.markSynced();
     }
-
-//    private Response getResourceFromRemoteHost(String url) {
-//        log.debug("Getting account information from {}.", url);
-//        Response response;
-//        if (lastSyncTime != null) {
-//            url = String.format("%s?after=%s", url, lastSyncTime.toString());
-//        }
-//        response = restTemplate.getForObject(url, Response.class);
-//        if (response != null && response.bookmark == null) {
-//            log.error("Response from remote host did not contain a valid marker");
-//            return null;
-//        }
-//        if (response != null && response.accounts == null) {
-//            lastSyncTime = response.bookmark;
-//            return null;
-//        }
-//        return response;
-//    }
 }
