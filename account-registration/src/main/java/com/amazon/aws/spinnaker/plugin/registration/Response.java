@@ -36,14 +36,19 @@ public class Response {
 
     @JsonProperty("accounts")
     List<Account> accounts;
+
+    @JsonProperty("Pagination")
+    private AccountPagination pagination;
     @JsonProperty("Bookmark")
     Long bookmark;
+
     @JsonIgnore
     HashMap<String, CredentialsConfig.Account> ec2Accounts;
     @JsonIgnore
     HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     @JsonIgnore
     List<String> deletedAccounts;
+
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
         return new ECSCredentialsConfig.Account() {{
