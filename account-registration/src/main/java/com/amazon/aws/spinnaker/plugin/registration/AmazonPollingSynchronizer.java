@@ -33,8 +33,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-
 
 @Component
 @DependsOn("netflixAmazonCredentials")
@@ -82,7 +80,7 @@ class AmazonPollingSynchronizer {
     }
 
     void sync() {
-        Boolean process = accountsStatus.getDesiredAccounts();
+        boolean process = accountsStatus.getDesiredAccounts();
         if (!process) {
             return;
         }
