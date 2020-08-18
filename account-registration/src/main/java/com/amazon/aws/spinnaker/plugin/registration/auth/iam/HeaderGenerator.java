@@ -44,23 +44,22 @@ public class headerGenerator {
         }};
     }
 
-    public TreeMap<String, String> generateHeaders(HttpMethodName method, String resourcePath, HashMap<String, String> params) {
+    public TreeMap<String, String> generateHeaders(HttpMethodName method, HashMap<String, String> params) {
         DefaultRequest request = new DefaultRequest(targetServiceName);
         request.setHttpMethod(method);
         request.setEndpoint(this.endpoint);
-        request.setResourcePath(resourcePath);
+        request.setResourcePath("");
         if (params != null) {
             HashMap<String, List<String>> newParams = new HashMap<>();
             for (Map.Entry<String, String> entry : params.entrySet()) {
-                newParams.put(entry.getKey(), new ArrayList<String>(Arrays.asList(entry.getValue())));
+                newParams.put(entry.getKey(), new ArrayList<String>(Collections.singletonList(entry.getValue())));
             }
             request.setParameters(newParams);
         }
         request.setHeaders(Collections.singletonMap("Content-type", "application/json"));
         aws4Signer.sign(request, aWSCredentialsProvider.getCredentials());
 
-        TreeMap<String, String > map = (TreeMap<String, String>) request.getHeaders();
-        return map;
+        return (TreeMap<String, String>) request.getHeaders();
     }
 
 }
