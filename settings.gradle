@@ -6,7 +6,7 @@ pluginManagement {
   }
 }
 
-rootProject.name="spinnaker-aws-account-registration"
+rootProject.name="aws-account-registration-spinnaker"
 
 include "account-registration"
 
