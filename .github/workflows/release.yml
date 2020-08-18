@@ -52,21 +52,19 @@ jobs:
           asset_name: ${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
           asset_content_type: application/zip 
 
-       - name: mutate package-info.json
-         id: mutate-package-info
-         env:
-           ARTIFACT_URL: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
-         run: cat plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + {"url": $ARTIFACT_URL} else . end)' > ./plugin.json
+      - name: mutate package-info.json
+        id: mutate-package-info
+        env:
+          ARTIFACT_URL: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
+        run: cat plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + {"url": $ARTIFACT_URL} else . end)' > ./plugin.json
 
-       - name upload package.json
-         id: upload-package-info
-         uses: actions/upload-release-asset@v1
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./plugin.json
-          asset_name: plugin.json 
-          asset_content_type: application/json
-         with:
-        
+      - name: upload package.json
+        id: upload-package-info
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+         upload_url: ${{ steps.create_release.outputs.upload_url }}
+         asset_path: ./plugin.json
+         asset_name: plugin.json 
+         asset_content_type: application/json 
