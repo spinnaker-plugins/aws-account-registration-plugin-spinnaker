@@ -27,13 +27,13 @@ import org.springframework.http.HttpHeaders;
 import java.net.URI;
 import java.util.*;
 
-public class headerGenerator {
-    private String targetServiceName;
+public class HeaderGenerator {
+    private final String targetServiceName;
     private final AWSCredentialsProvider aWSCredentialsProvider;
-    private final AWS4Signer aws4Signer;
+    protected final AWS4Signer aws4Signer;
     private final URI endpoint;
 
-    public headerGenerator(String targetServiceName, String region,
+    public HeaderGenerator(String targetServiceName, String region,
                            AWSCredentialsProvider aWSCredentialsProvider, URI endpoint) {
         this.aWSCredentialsProvider = aWSCredentialsProvider;
         this.endpoint = endpoint;
