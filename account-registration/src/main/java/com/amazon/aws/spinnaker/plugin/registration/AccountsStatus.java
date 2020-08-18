@@ -38,6 +38,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Slf4j
@@ -47,8 +49,8 @@ public class AccountsStatus {
     public HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     public List<String> deletedAccounts;
 
-    private Long lastSyncTime;
-    private Long lastAttemptedTIme;
+    private String lastSyncTime;
+    private String lastAttemptedTIme;
     @Value("${accountProvision.url:http://localhost:8080}")
     private String remoteHostUrl;
     @Value("${accountProvision.iamAuth:false}")
@@ -127,15 +129,18 @@ public class AccountsStatus {
             response = getResources(url);
         }
 
-        if (response == null || response.bookmark == null) {
-            log.error("Response from remote host was null or did not receive a valid bookmark.");
+        if (response == null) {
+            log.error("Response from remote host was invalid.");
             return null;
         }
-        if (response.accounts == null) {
-            lastSyncTime = response.bookmark;
+        if (response.accounts == null || response.accounts.isEmpty()) {
             return null;
         }
-        this.lastAttemptedTIme = response.bookmark;
+        String mostRecentTime = findMostRecentTime(response);
+        if (mostRecentTime == null) {
+            return null;
+        }
+        this.lastAttemptedTIme = findMostRecentTime(response);
         return response;
     }
 
@@ -190,7 +195,7 @@ public class AccountsStatus {
 
     private Response getResources(String url) {
         if (lastSyncTime != null) {
-            url = String.format("%s?after=%s", url, lastSyncTime.toString());
+            url = String.format("%s?after=%s", url, lastSyncTime);
         }
         return restTemplate.getForObject(url, Response.class);
     }
@@ -199,8 +204,8 @@ public class AccountsStatus {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(remoteHostUrl);
         HashMap<String, String> queryStrings = new HashMap<>();
         if (lastSyncTime != null) {
-            queryStrings.put("after", lastSyncTime.toString());
-            builder.queryParam("after", lastSyncTime.toString());
+            queryStrings.put("after", lastSyncTime);
+            builder.queryParam("after", lastSyncTime);
         }
         TreeMap<String, String> generatedHeaders = headerGenerator.generateHeaders(queryStrings);
         HttpHeaders headers = new HttpHeaders();
@@ -215,6 +220,22 @@ public class AccountsStatus {
                 Response.class
         );
         return response.getBody();
+    }
+
+    private String findMostRecentTime(Response response) {
+        List<Instant> instants = new ArrayList();
+        for (Account account : response.getAccounts()) {
+            try {
+                instants.add(Instant.parse(account.getUpdatedAt()));
+            } catch (DateTimeParseException e) {
+                log.error(String.format("Unable to parse date string, %s.", account.getUpdatedAt()));
+            }
+        }
+        if (instants.isEmpty()) {
+            return null;
+        }
+        Instant oldest = Collections.max(instants);
+        return oldest.toString();
     }
 
 }

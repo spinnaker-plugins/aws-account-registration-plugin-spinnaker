@@ -39,8 +39,6 @@ public class Response {
 
     @JsonProperty("Pagination")
     private AccountPagination pagination;
-    @JsonProperty("Bookmark")
-    Long bookmark;
 
     @JsonIgnore
     HashMap<String, CredentialsConfig.Account> ec2Accounts;

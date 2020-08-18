@@ -95,6 +95,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+                    setUpdatedAt("2020-08-15T15:17:48Z");
                 }},
                 new Account() {{
                     setName("test9");
@@ -104,19 +105,27 @@ public class AccountsStatusTest {
                     setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ec2")));
                     setStatus("SUSPENDED");
+                    setUpdatedAt("2020-08-14T15:17:48Z");
+                }},
+                new Account() {{
+                    setName("test8");
+                    setAccountId("8");
+                    setAssumeRole("role/role1-8");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setEnabled(true);
+                    setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+                    setUpdatedAt("2020-08-17T15:17:48Z");
                 }}
         ));
 
         Response response = new Response() {{
             setAccounts(correctAccounts);
-            setBookmark(1234567890L);
         }};
-        Response noBookmark = new Response() {{
-            setAccounts(correctAccounts);
+        Response nullResponse = new Response() {{
         }};
         RestTemplate mockRest = Mockito.mock(RestTemplate.class);
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
-                .thenReturn(noBookmark);
+                .thenReturn(nullResponse);
         AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig) {{
             setRemoteHostUrl("http://localhost:8080/hello");
         }};
@@ -126,6 +135,7 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(response);
         assertTrue(status.getDesiredAccounts());
+        assertEquals("2020-08-17T15:17:48Z", status.getLastAttemptedTIme());
         assertAll("Account should be overwriten by remote accounts",
                 () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
                 () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
