@@ -51,11 +51,10 @@ jobs:
 
       - name: upload plugin info asset
         id: upload-plugin-info-asset
-        uses: actions/upload-release-asset@v1
+        uses: armory-io/plugin-metadata-updater@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OAUTH: ${{ secrets.TOKEN }} 
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url}}
-          asset_path: ./build/distributions/plugin-info.json
-          asset_name: plugin-info.json
-          asset_content_type: application/json
+          metadata: build/distributions/plugin-info.json
+          binary_url: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
+          metadata_repo_url: https://github.com/awslabs/aws-account-registration-plugin-spinnaker
