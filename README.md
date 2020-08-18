@@ -25,6 +25,8 @@ accountProvision:
   url: 'http://localhost:8080/hello' # Remote host address. 
   pullFrequencyInMilliSeconds: 10000 # How often this plugin should query the remote host.
   syncAgentFrequencyInMilliSeconds: 10000 # How often agent scheduler should run.
+  iamAuth: true # Enable IAM authentication for API Gateway.
+  iamAuthRegion: 'us-west-2' # Specify which region API Gateway is deployed. Required if `iamAuth` is enabled.
 ```
 
 ### Known issues
