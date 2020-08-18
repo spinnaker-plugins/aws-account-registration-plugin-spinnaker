@@ -1,0 +1,33 @@
+{
+  "Accounts": [
+    {
+      "AccountId": "9",
+      "AccountArn": "",
+      "AccountEmail": "",
+      "AccountName": "test-9",
+      "Environment": "dev",
+      "Profile": "mcp",
+      "Regions": [
+        "us-west-2",
+        "us-west-1"
+      ],
+      "ServiceId": "",
+      "Status": "ACTIVE",
+      "SpinnakerAssumeRole": "role9",
+      "SpinnakerProviders": [
+        "ec2",
+        "ecs",
+        "lambda"
+      ],
+      "SpinnakerEnabled": true,
+      "CreatedAt": "123",
+      "UpdatedAt": "123"
+    }
+  ],
+  "Pagination": {
+    "Limit": "<>",
+    "NextUrl": "<>",
+    "CursorState": "<>"
+  },
+  "Bookmark": 259950518779
+}
