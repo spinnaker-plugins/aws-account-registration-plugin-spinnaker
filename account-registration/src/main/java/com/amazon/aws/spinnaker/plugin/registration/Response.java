@@ -34,7 +34,7 @@ public class Response {
         this.accounts = new ArrayList<>();
     }
 
-    @JsonProperty("accounts")
+    @JsonProperty("Accounts")
     List<Account> accounts;
 
     @JsonProperty("Pagination")

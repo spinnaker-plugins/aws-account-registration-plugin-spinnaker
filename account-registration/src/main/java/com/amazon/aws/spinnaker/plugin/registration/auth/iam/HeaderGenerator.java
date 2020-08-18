@@ -18,11 +18,9 @@
 package com.amazon.aws.spinnaker.plugin.registration.auth.iam;
 
 import com.amazonaws.DefaultRequest;
-import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.http.HttpMethodName;
-import org.springframework.http.HttpHeaders;
 
 import java.net.URI;
 import java.util.*;
@@ -38,17 +36,18 @@ public class HeaderGenerator {
         this.aWSCredentialsProvider = aWSCredentialsProvider;
         this.endpoint = endpoint;
         this.targetServiceName = targetServiceName;
-        this.aws4Signer = new AWS4Signer(){{
+        this.aws4Signer = new AWS4Signer() {{
             setServiceName(targetServiceName);
             setRegionName(region);
         }};
     }
 
-    public TreeMap<String, String> generateHeaders(HttpMethodName method, HashMap<String, String> params) {
-        DefaultRequest request = new DefaultRequest(targetServiceName);
-        request.setHttpMethod(method);
-        request.setEndpoint(this.endpoint);
-        request.setResourcePath("");
+    public TreeMap<String, String> generateHeaders(HashMap<String, String> params) {
+        DefaultRequest request = new DefaultRequest(targetServiceName) {{
+            setHttpMethod(HttpMethodName.GET);
+            setEndpoint(endpoint);
+            setResourcePath("");
+        }};
         if (params != null) {
             HashMap<String, List<String>> newParams = new HashMap<>();
             for (Map.Entry<String, String> entry : params.entrySet()) {

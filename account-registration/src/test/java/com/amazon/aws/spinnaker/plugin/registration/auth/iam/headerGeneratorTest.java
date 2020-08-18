@@ -20,8 +20,8 @@ package com.amazon.aws.spinnaker.plugin.registration.auth.iam;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.http.HttpMethodName;
 import org.junit.jupiter.api.Test;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -47,7 +47,7 @@ public class headerGeneratorTest {
             headerGenerator.aws4Signer.setOverrideDate(calender.getTime());
             HashMap<String, String> queryStrings = new HashMap<>();
             queryStrings.put("after", "123");
-            TreeMap<String, String> headers = headerGenerator.generateHeaders(HttpMethodName.GET, queryStrings);
+            TreeMap<String, String> headers = headerGenerator.generateHeaders(queryStrings);
             assertEquals(headers.get("Host"), expectedHost);
             assertEquals(headers.get("Authorization"), expectedAuth);
         } catch (URISyntaxException e) {
