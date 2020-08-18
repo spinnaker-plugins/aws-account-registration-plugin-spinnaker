@@ -53,7 +53,7 @@ jobs:
         id: upload-plugin-info-asset
         uses: armory-io/plugin-metadata-updater@master
         env:
-          GITHUB_OAUTH: ${{ secrets.TOKEN }} 
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }} 
         with:
           metadata: build/distributions/plugin-info.json
           binary_url: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
