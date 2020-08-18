@@ -1,4 +1,3 @@
-
 name: Release
 
 on:
@@ -50,13 +49,3 @@ jobs:
           asset_name: ${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
           asset_content_type: application/zip 
       
-      - name: upload image to release
-        id: upload-image-to-release 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./${{ steps.get_project_info.outputs.PROJECT_KEBAB }}-${{ steps.get_project_info.outputs.VERSION }}.tar
-          asset_name: ${{ steps.get_project_info.outputs.PROJECT_KEBAB }}-${{ steps.get_project_info.outputs.VERSION }}.tar
-          asset_content_type: application/zip
