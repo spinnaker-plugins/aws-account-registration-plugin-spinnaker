@@ -1,4 +1,5 @@
 ## Spinnaker Plugin for Dynamic Account Registration
+![CI](https://github.com/awslabs/aws-account-registration-plugin-spinnaker/workflows/CI/badge.svg)
 
 ### Usage
 1. Run `./gradlew releaseBundle` in the root of this project. 
