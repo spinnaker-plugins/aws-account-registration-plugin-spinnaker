@@ -22,15 +22,44 @@ spinnaker:
 ### Available configuration properties:
 ```yaml
 accountProvision:
-  url: 'http://localhost:8080/hello' # Remote host address. 
+  url: 'http://localhost:8080' # Remote host address. 
   pullFrequencyInMilliSeconds: 10000 # How often this plugin should query the remote host.
   syncAgentFrequencyInMilliSeconds: 10000 # How often agent scheduler should run.
-  iamAuth: true # Enable IAM authentication for API Gateway.
+  iamAuth: false # Enable IAM authentication for API Gateway.
   iamAuthRegion: 'us-west-2' # Specify which region API Gateway is deployed. Required if `iamAuth` is enabled.
 ```
 
 ### Known issues
-1. When creating lambda functions, on-demand cache update may fail. This seems to be a bug in caching agent in `clouddriver-lambda`. 
+1. When creating lambda functions, on-demand cache update may fail. This seems to be a bug in caching agent in `clouddriver-lambda`.
+This is fixed in [this PR](https://github.com/spinnaker/clouddriver/pull/4802). 
+
+### Expected JSON payload
+This plugin expects the following JSON payload.
+```json
+{
+  "Accounts": [
+    {
+      "AccountId": "123",
+      "AccountName": "account1",
+      "Regions": [
+        "us-west-2"
+      ],
+      "Status": "ACTIVE|SUSPENDED",
+      "SpinnakerAssumeRole": "role/role1",
+      "SpinnakerProviders": [
+        "ECS", "Lambda"
+      ],
+      "SpinnakerEnabled": true,
+      "UpdatedAt": "2020-08-17T15:17:48Z"
+    }
+
+  ],
+  "Pagination": {
+    "NextUrl": "localhost:8080/accounts/next"
+  }
+
+}
+```
 
 ## Security
 
