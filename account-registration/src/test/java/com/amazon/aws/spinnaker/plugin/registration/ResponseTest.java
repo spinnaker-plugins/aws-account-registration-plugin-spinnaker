@@ -40,7 +40,7 @@ public class ResponseTest {
         accounts.put("test2", new Account() {{
             setName("test2");
             setAccountId("2");
-            setAssumeRole("role/role2");
+            setAssumeRole("role2");
             setRegions(new ArrayList(Arrays.asList("us-west-2")));
             setEnabled(true);
             setProviders(new ArrayList());
