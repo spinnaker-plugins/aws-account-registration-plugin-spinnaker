@@ -57,7 +57,7 @@ jobs:
         env:
           ARTIFACT_URL: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
           PLUGIN_ENTRY: '{"url": $ARTIFACT_URL}'
-        run: cat .build/distributions/plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + $PLUGIN_ENTRY else . end)' > ./plugin.json
+        run: cat ./build/distributions/plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + $PLUGIN_ENTRY else . end)' > ./plugin.json
 
       - name: upload package.json
         id: upload-package-info
