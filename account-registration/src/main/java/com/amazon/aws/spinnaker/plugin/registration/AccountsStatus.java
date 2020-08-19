@@ -92,7 +92,7 @@ public class AccountsStatus {
                 Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
                     accounts.addAll(nextResponse.getAccounts());
-                    nextUrl = response.getPagination().getNextUrl();
+                    nextUrl = nextResponse.getPagination().getNextUrl();
                     continue;
                 }
                 nextUrl = null;
@@ -109,6 +109,9 @@ public class AccountsStatus {
                                            List<String> deletedAccounts) {
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
+        if (credentialsConfig.getAccounts() == null){
+            return;
+        }
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
             for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
                 if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
