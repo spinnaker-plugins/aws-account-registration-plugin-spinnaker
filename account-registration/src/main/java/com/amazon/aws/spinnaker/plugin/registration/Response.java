@@ -69,8 +69,9 @@ public class Response {
             setRegions(regions);
             setPermissions(account.getPermissions());
             setEnvironment(account.getEnvironment());
+            setEnabled(true);
         }};
-        if (!account.getAssumeRole().startsWith("role/")) {
+        if (!account.getAssumeRole().toLowerCase().startsWith("role/")) {
             ec2Account.setAssumeRole(String.format("role/%s", account.getAssumeRole()));
         }
         return ec2Account;
@@ -81,8 +82,7 @@ public class Response {
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
         for (Account account : accounts) {
-            CredentialsConfig.Account exists = ec2Accounts.get(account.getName());
-            if (exists != null) {
+            if (ec2Accounts.get(account.getName()) != null) {
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
@@ -95,11 +95,11 @@ public class Response {
                 ec2Account.setEnabled(account.getEnabled());
             }
             for (String provider : account.getProviders()) {
-                if ("lambda".equals(provider)) {
+                if ("lambda".equals(provider.toLowerCase())) {
                     ec2Account.setLambdaEnabled(true);
                     continue;
                 }
-                if ("ecs".equals(provider)) {
+                if ("ecs".equals(provider.toLowerCase())) {
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                 }

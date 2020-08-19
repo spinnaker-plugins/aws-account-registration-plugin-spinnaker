@@ -36,26 +36,6 @@ public class AccountsStatusTest {
 
     @Test
     public void testGetDesiredAccounts() {
-        CredentialsConfig.Account ec2Account = new CredentialsConfig.Account() {{
-            setName("test1");
-            setAccountId("1");
-            setAssumeRole("role/role1");
-            setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
-                setName("us-west-2");
-            }})));
-            setLambdaEnabled(false);
-            setEnabled(true);
-        }};
-        CredentialsConfig.Account removeAccount = new CredentialsConfig.Account() {{
-            setName("test9");
-            setAccountId("9");
-            setAssumeRole("role/role9");
-            setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
-                setName("us-west-2");
-            }})));
-            setLambdaEnabled(true);
-            setEnabled(true);
-        }};
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(
                     new CredentialsConfig.Account() {{
@@ -120,6 +100,9 @@ public class AccountsStatusTest {
 
         Response response = new Response() {{
             setAccounts(correctAccounts);
+            setPagination(new AccountPagination(){{
+                setNextUrl("");
+            }});
         }};
         Response nullResponse = new Response() {{
         }};

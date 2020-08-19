@@ -84,6 +84,21 @@ public class AccountsStatus {
         if (response == null) {
             return false;
         }
+        String nextUrl = response.getPagination().getNextUrl();
+        if (!"".equals(nextUrl)) {
+            List<Account> accounts = response.getAccounts();
+            while (!"".equals(nextUrl)) {
+                log.debug("Calling next URL, {}", nextUrl);
+                Response nextResponse = getResourceFromRemoteHost(nextUrl);
+                if (nextResponse != null) {
+                    accounts.addAll(nextResponse.getAccounts());
+                    nextUrl = response.getPagination().getNextUrl();
+                    continue;
+                }
+                nextUrl = null;
+            }
+            response.setAccounts(accounts);
+        }
         response.convertCredentials();
         buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
         return true;
@@ -150,7 +165,7 @@ public class AccountsStatus {
 
     private Response getResourceFromApiGateway(String url) {
         if (!url.endsWith("/")) {
-            remoteHostUrl = String.format("%s/", url);
+            url = String.format("%s/", url);
         }
         if (this.headerGenerator == null) {
             makeHeaderGenerator(url);
@@ -159,14 +174,14 @@ public class AccountsStatus {
             }
         }
         try {
-            return callApiGateway();
+            return callApiGateway(url);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.FORBIDDEN == e.getStatusCode()) {
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
                     return null;
                 }
-                return callApiGateway();
+                return callApiGateway(url);
             }
         }
         return null;
@@ -195,17 +210,17 @@ public class AccountsStatus {
 
     private Response getResources(String url) {
         if (lastSyncTime != null) {
-            url = String.format("%s?after=%s", url, lastSyncTime);
+            url = String.format("%s?UpdatedAt.gt=%s", url, lastSyncTime);
         }
         return restTemplate.getForObject(url, Response.class);
     }
 
-    private Response callApiGateway() {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(remoteHostUrl);
+    private Response callApiGateway(String url) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HashMap<String, String> queryStrings = new HashMap<>();
         if (lastSyncTime != null) {
-            queryStrings.put("after", lastSyncTime);
-            builder.queryParam("after", lastSyncTime);
+            queryStrings.put("UpdatedAt.gt", lastSyncTime);
+            builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
         TreeMap<String, String> generatedHeaders = headerGenerator.generateHeaders(queryStrings);
         HttpHeaders headers = new HttpHeaders();
