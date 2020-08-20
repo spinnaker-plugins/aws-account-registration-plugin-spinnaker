@@ -230,4 +230,54 @@ public class AccountsStatusTest {
         }};
         assertEquals(1, status.getECSAccountsAsList().size());
     }
+
+    @Test
+    public void TestExceptions() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new AccountsStatus(null, null, null,
+                "invalid")
+        );
+
+        CredentialsConfig credentialsConfig = new CredentialsConfig() {{
+            setAccounts(new ArrayList());
+        }};
+        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig(){{
+            setAccounts(new ArrayList());
+        }};
+
+        List<Account> correctAccounts = new ArrayList<Account>(Arrays.asList(
+                new Account() {{
+                    setName("test1");
+                    setAccountId("1");
+                    setAssumeRole("role/role1-1");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setEnabled(true);
+                    setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+                    setUpdatedAt("2020-08-15T15:17:48Z");
+                }},
+                new Account() {{
+                    setName("test9");
+                    setAccountId("9");
+                    setAssumeRole("role/role9");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setEnabled(true);
+                    setProviders(new ArrayList(Arrays.asList("ec2")));
+                    setStatus("SUSPENDED");
+                    setUpdatedAt("2020-08-14T15:17:48Z");
+                }}
+        ));
+
+        Response response = new Response() {{
+            setAccounts(correctAccounts);
+            setPagination(new AccountPagination() {{
+                setNextUrl("invalidURL");
+            }});
+        }};
+        RestTemplate mockRest = Mockito.mock(RestTemplate.class);
+        AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
+        Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
+                .thenReturn(response);
+        status.getDesiredAccounts();
+        assertEquals(1, status.getEc2Accounts().size());
+    }
 }

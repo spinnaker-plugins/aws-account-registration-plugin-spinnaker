@@ -34,6 +34,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -65,7 +66,7 @@ public class AccountsStatus {
     AccountsStatus(
             RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
             @Value("${accountProvision.url:http://localhost:8080}") String url
-    ) throws URISyntaxException {
+    ) {
         this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
@@ -99,7 +100,8 @@ public class AccountsStatus {
                         continue;
                     }
                     nextUrl = null;
-                } catch (URISyntaxException e) {
+                } catch (IllegalArgumentException e) {
+                    log.error("provided next URL was invalid: {}", nextUrl);
                     e.printStackTrace();
                     break;
                 }
@@ -276,11 +278,11 @@ public class AccountsStatus {
         return oldest.toString();
     }
 
-    private String buildSig4LibURL(String url) throws URISyntaxException {
+    private String buildSig4LibURL(String url) {
         log.debug("Given url: {}", url);
-        URI uri = new URI(url);
-        String path = uri.getPath();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+        UriComponents components = builder.build();
+        String path = components.getPath();
         if (path != null && !path.endsWith("/")) {
             builder.replacePath(path + "/");
         }
