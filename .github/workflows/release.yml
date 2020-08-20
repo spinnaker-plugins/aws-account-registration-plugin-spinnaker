@@ -58,14 +58,13 @@ jobs:
           ARTIFACT_URL: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
         run: cat ./build/distributions/plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + '{\"url\":\"$ARTIFACT_URL\"}' else . end)' > ./plugins.json
 
-      - name: commit plugins.json
-        id: commit-plugins 
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name 'Release Bot'
-          git config user.email 'release-bot@users.noreply.github.com'
-          git checkout -b ${{ steps.get_project_info.outputs.VERSION }}
-          git add plugins.json
-          git commit -m "updating release repository"
-          git push -u origin ${{ steps.get_project_info.outputs.VERSION }} 
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v3
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            commit-message: Update plugin repository file
+            title: '[EXAMPLE] Update Plugin Repository with Latest Release'
+            body: |
+              - Dependency updates  
+            branch: 'release-${{ steps.get_project_info.outputs.VERSION }}' 
+
