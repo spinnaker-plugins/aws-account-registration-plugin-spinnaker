@@ -52,19 +52,28 @@ jobs:
           asset_name: ${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
           asset_content_type: application/zip 
 
-      - name: mutate package-info.json
+      - name: mutate plugin-info.json
         id: mutate-package-info
         env:
           ARTIFACT_URL: https://github.com/${{ steps.get_project_info.outputs.REPO }}/releases/download/${{ steps.get_project_info.outputs.VERSION }}/${{ steps.get_project_info.outputs.PROJECT }}-${{ steps.get_project_info.outputs.VERSION }}.zip
-        run: cat ./build/distributions/plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + '{\"url\":\"$ARTIFACT_URL\"}' else . end)' > ./plugin.json
+        run: cat ./build/distributions/plugin-info.json | jq '.releases |= map(if .version == "v0.0.1" then . + '{\"url\":\"$ARTIFACT_URL\"}' else . end)' > ./plugins.json
 
-      - name: upload package.json
+      - name: upload plugins.json
         id: upload-package-info
-        uses: actions/upload-release-asset@v1
+        uses: actions/checkout@v2 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name 'Release Bot'
+          git config user.email 'release-bot@users.noreply.github.com'
+          git add plugins.json
+          git commit -m "updating release repository"
+      - name: create pull request
+        id: create-pull-request
+        uses: peter-evans/create-pull-request@v3
         with:
-         upload_url: ${{ steps.create_release.outputs.upload_url }}
-         asset_path: ./plugin.json
-         asset_name: plugin.json 
-         asset_content_type: application/json 
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: feature/github-actions
+          title: '[Example] Update Release Repository - ${{ steps.get_project_info.outputs.VERSION }}'
+          team-reviewers: |
+            owners
