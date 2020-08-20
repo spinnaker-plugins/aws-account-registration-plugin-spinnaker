@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccountsStatusTest {
 
     @Test
-    public void testGetDesiredAccounts() {
+    public void testGetDesiredAccounts() throws URISyntaxException {
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(
                     new CredentialsConfig.Account() {{
@@ -120,37 +121,38 @@ public class AccountsStatusTest {
         RestTemplate mockRest = Mockito.mock(RestTemplate.class);
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(nullResponse);
-        AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig) {{
-            setRemoteHostUrl("http://localhost:8080/hello/");
-        }};
-        assertFalse(status.getDesiredAccounts());
 
-        Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/hello.*"), Mockito.eq(Response.class)))
-                .thenReturn(response);
-        Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/next.*"), Mockito.eq(Response.class)))
-                .thenReturn(nextResponse);
-        assertTrue(status.getDesiredAccounts());
-        assertEquals("2020-08-17T15:17:48Z", status.getLastAttemptedTIme());
-        assertAll("Account should be overwritten by remote accounts",
-                () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
-                () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
-                () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
-        );
-        assertAll("Account should be removed",
-                () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
-                () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
-        );
-        assertAll("Account from next URL should be added",
-                () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
-                () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
-        );
+            AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
+            assertFalse(status.getDesiredAccounts());
+
+            Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/hello.*"), Mockito.eq(Response.class)))
+                    .thenReturn(response);
+            Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/next.*"), Mockito.eq(Response.class)))
+                    .thenReturn(nextResponse);
+            assertTrue(status.getDesiredAccounts());
+            assertEquals("2020-08-17T15:17:48Z", status.getLastAttemptedTIme());
+            assertAll("Account should be overwritten by remote accounts",
+                    () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
+                    () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
+                    () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
+            );
+            assertAll("Account should be removed",
+                    () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
+                    () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
+            );
+            assertAll("Account from next URL should be added",
+                    () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
+                    () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
+            );
+
+
 
         CredentialsConfig cc = new CredentialsConfig() {{
             setAccessKeyId("access");
             setSecretAccessKey("secret");
         }};
-        AccountsStatus statusAPIGateway = new AccountsStatus(mockRest, cc, ecsCredentialsConfig) {{
-            setRemoteHostUrl("http://localhost:8080/apigateway");
+
+        AccountsStatus statusAPIGateway = new AccountsStatus(mockRest, cc, ecsCredentialsConfig, "http://localhost:8080/apigateway"){{
             setIamAuth(true);
             setRegion("us-west-2");
         }};
@@ -161,5 +163,7 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.exchange(Mockito.matches("http://localhost:8080/next.*"),
                 Mockito.eq(HttpMethod.GET), Mockito.any(), Mockito.eq(Response.class))).thenReturn(responseEntityNext);
         assertTrue(statusAPIGateway.getDesiredAccounts());
+
+
     }
 }

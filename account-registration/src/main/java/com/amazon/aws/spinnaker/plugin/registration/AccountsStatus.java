@@ -63,11 +63,19 @@ public class AccountsStatus {
 
     @Autowired
     AccountsStatus(
-            RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig
-    ) {
+            RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
+            @Value("${accountProvision.url:http://localhost:8080}") String url
+    ) throws URISyntaxException {
         this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
+        URI uri = new URI(url);
+        String path = uri.getPath();
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+        if (path != null && !path.endsWith("/")) {
+            builder.replacePath(path + "/");
+        }
+        this.remoteHostUrl = builder.toUriString();
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
@@ -98,7 +106,7 @@ public class AccountsStatus {
             }
             response.setAccounts(accounts);
         }
-        log.debug("Finished gathering accounts. Processing {} accounts.", response.getEc2Accounts().size());
+        log.debug("Finished gathering accounts. Processing {} accounts.", response.getAccounts().size());
         response.convertCredentials();
         buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
         return true;
@@ -161,7 +169,7 @@ public class AccountsStatus {
         if (mostRecentTime == null) {
             return null;
         }
-        this.lastAttemptedTIme = findMostRecentTime(response);
+        this.lastAttemptedTIme = mostRecentTime;
         return response;
     }
 
@@ -170,9 +178,6 @@ public class AccountsStatus {
     }
 
     private Response getResourceFromApiGateway(String url) {
-        if (!url.endsWith("/")) {
-            url = String.format("%s/", url);
-        }
         if (this.headerGenerator == null) {
             makeHeaderGenerator(url);
             if (this.headerGenerator == null) {
@@ -218,10 +223,11 @@ public class AccountsStatus {
     }
 
     private Response getResources(String url) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         if (lastSyncTime != null) {
-            url = String.format("%s?UpdatedAt.gt=%s", url, lastSyncTime);
+            builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
-        return restTemplate.getForObject(url, Response.class);
+        return restTemplate.getForObject(builder.toUriString(), Response.class);
     }
 
     private Response callApiGateway(String url) {
