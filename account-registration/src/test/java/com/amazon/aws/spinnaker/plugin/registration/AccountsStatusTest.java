@@ -277,7 +277,8 @@ public class AccountsStatusTest {
         AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(response);
-        status.getDesiredAccounts();
-        assertEquals(1, status.getEc2Accounts().size());
+        assertThrows(IllegalArgumentException.class,
+                () -> status.getDesiredAccounts());
+
     }
 }

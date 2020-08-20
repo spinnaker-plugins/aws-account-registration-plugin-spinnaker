@@ -90,21 +90,15 @@ public class AccountsStatus {
         if (!"".equals(nextUrl)) {
             List<Account> accounts = response.getAccounts();
             while (nextUrl != null && !"".equals(nextUrl)) {
-                try {
-                    String formattedURL = buildSig4LibURL(nextUrl);
-                    log.info("Calling next URL, {}", formattedURL);
-                    Response nextResponse = getResourceFromRemoteHost(formattedURL);
-                    if (nextResponse != null) {
-                        accounts.addAll(nextResponse.getAccounts());
-                        nextUrl = nextResponse.getPagination().getNextUrl();
-                        continue;
-                    }
-                    nextUrl = null;
-                } catch (IllegalArgumentException e) {
-                    log.error("provided next URL was invalid: {}", nextUrl);
-                    e.printStackTrace();
-                    break;
+                String formattedURL = buildSig4LibURL(nextUrl);
+                log.info("Calling next URL, {}", formattedURL);
+                Response nextResponse = getResourceFromRemoteHost(formattedURL);
+                if (nextResponse != null) {
+                    accounts.addAll(nextResponse.getAccounts());
+                    nextUrl = nextResponse.getPagination().getNextUrl();
+                    continue;
                 }
+                nextUrl = null;
             }
             response.setAccounts(accounts);
         }
