@@ -88,10 +88,10 @@ public class AccountsStatus {
         String nextUrl = response.getPagination().getNextUrl();
         if (!"".equals(nextUrl)) {
             List<Account> accounts = response.getAccounts();
-            while ( nextUrl != null && !"".equals(nextUrl)) {
+            while (nextUrl != null && !"".equals(nextUrl)) {
                 try {
-                    String formattedURL =  buildSig4LibURL(nextUrl);
-                    log.debug("Calling next URL, {}", formattedURL);
+                    String formattedURL = buildSig4LibURL(nextUrl);
+                    log.info("Calling next URL, {}", formattedURL);
                     Response nextResponse = getResourceFromRemoteHost(formattedURL);
                     if (nextResponse != null) {
                         accounts.addAll(nextResponse.getAccounts());
@@ -109,7 +109,8 @@ public class AccountsStatus {
         if (response.getAccounts().isEmpty()) {
             return false;
         }
-        log.debug("Finished gathering accounts. Processing {} accounts.", response.getAccounts().size());
+        log.info("Finished gathering accounts from remote host. Processing {} accounts.", response.getAccounts().size());
+        log.debug(response.getAccounts().toString());
         String mostRecentTime = findMostRecentTime(response);
         if (mostRecentTime == null) {
             return false;
@@ -125,6 +126,7 @@ public class AccountsStatus {
                                            List<String> deletedAccounts) {
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
+
         if (credentialsConfig.getAccounts() == null) {
             return;
         }
@@ -270,7 +272,7 @@ public class AccountsStatus {
         }
         log.debug("Finding most recent timestamp, {}", instants);
         Instant oldest = Collections.max(instants);
-        log.debug("Most recent timestamp is {}", instants.toString());
+        log.debug("Most recent timestamp is {}", oldest.toString());
         return oldest.toString();
     }
 

@@ -84,32 +84,38 @@ public class Response {
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
         for (Account account : accounts) {
+            log.trace(account.toString());
+            String accountName = account.getName();
             if (ec2Accounts.get(account.getName()) != null) {
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
-                deletedAccounts.add(account.getName());
+                log.debug("Account, {}, will be removed: {}", accountName, account);
+                deletedAccounts.add(accountName);
                 continue;
             }
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
             if (account.getEnabled() != null) {
+                log.debug("Account, {}, will be disabled", accountName);
                 ec2Account.setEnabled(account.getEnabled());
             }
             for (String provider : account.getProviders()) {
                 if ("lambda".equals(provider.toLowerCase())) {
+                    log.debug("Enabling Lambda for {}", accountName);
                     ec2Account.setLambdaEnabled(true);
                     continue;
                 }
                 if ("ecs".equals(provider.toLowerCase())) {
+                    log.debug("Enabling ECS for {}", accountName);
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                 }
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
-        log.debug("Retrieved accounts {}", ec2Accounts);
-        log.debug("Retrieved ECS accounts {}", ecsAccounts);
+        log.debug("Converted AWS accounts {}", ec2Accounts);
+        log.debug("Converted ECS accounts {}", ecsAccounts);
         log.debug("Accounts to be deleted {}", deletedAccounts);
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;

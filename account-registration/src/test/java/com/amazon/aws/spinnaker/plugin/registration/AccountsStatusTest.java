@@ -19,16 +19,20 @@ package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -106,13 +110,13 @@ public class AccountsStatusTest {
         }};
         Response response = new Response() {{
             setAccounts(correctAccounts);
-            setPagination(new AccountPagination(){{
+            setPagination(new AccountPagination() {{
                 setNextUrl("http://localhost:8080/next");
             }});
         }};
         Response nextResponse = new Response() {{
             setAccounts(nextAccounts);
-            setPagination(new AccountPagination(){{
+            setPagination(new AccountPagination() {{
                 setNextUrl("");
             }});
         }};
@@ -152,6 +156,7 @@ public class AccountsStatusTest {
                 .thenReturn(emptyResponse);
         AccountsStatus statusQueryString = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig,
                 "http://localhost:8080/hello?env=test");
+        statusQueryString.setLastSyncTime("2020-08-17T15:17:48Z");
         assertFalse(statusQueryString.getDesiredAccounts());
 
         CredentialsConfig cc = new CredentialsConfig() {{
@@ -159,17 +164,21 @@ public class AccountsStatusTest {
             setSecretAccessKey("secret");
         }};
 
-        AccountsStatus statusAPIGateway = new AccountsStatus(mockRest, cc, ecsCredentialsConfig, "http://localhost:8080/apigateway"){{
+        AccountsStatus statusAPIGateway = new AccountsStatus(mockRest, cc, ecsCredentialsConfig, "http://localhost:8080/apigateway?env=test") {{
             setIamAuth(true);
             setRegion("us-west-2");
+            setLastSyncTime("2010-08-10T15:17:48Z");
         }};
         ResponseEntity<Response> responseEntity = new ResponseEntity<Response>(response, HttpStatus.ACCEPTED);
         ResponseEntity<Response> responseEntityNext = new ResponseEntity<Response>(nextResponse, HttpStatus.ACCEPTED);
-        Mockito.when(mockRest.exchange(Mockito.eq("http://localhost:8080/apigateway/"),
+
+        Mockito.when(mockRest.exchange(Mockito.matches("http://localhost:8080/apigateway/.*"),
                 Mockito.eq(HttpMethod.GET), Mockito.any(), Mockito.eq(Response.class))).thenReturn(responseEntity);
-        Mockito.when(mockRest.exchange(Mockito.eq("http://localhost:8080/next/"),
+        Mockito.when(mockRest.exchange(Mockito.matches("http://localhost:8080/next/.*"),
                 Mockito.eq(HttpMethod.GET), Mockito.any(), Mockito.eq(Response.class))).thenReturn(responseEntityNext);
+
         assertTrue(statusAPIGateway.getDesiredAccounts());
+
     }
 
     @Test
@@ -184,15 +193,15 @@ public class AccountsStatusTest {
     @Test
     public void TestGetEC2AccountsAsList() throws URISyntaxException {
         HashMap<String, CredentialsConfig.Account> map = new HashMap<>();
-        map.put("test1", new CredentialsConfig.Account(){{
+        map.put("test1", new CredentialsConfig.Account() {{
             setName("test1");
             setAccountId("1");
         }});
-        map.put("test2", new CredentialsConfig.Account(){{
+        map.put("test2", new CredentialsConfig.Account() {{
             setName("test2");
             setAccountId("2");
         }});
-        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/"){{
+        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/") {{
             setEc2Accounts(map);
         }};
         assertEquals(2, status.getEC2AccountsAsList().size());
@@ -202,20 +211,20 @@ public class AccountsStatusTest {
     @Test
     public void TestGetECSAccountsAsList() throws URISyntaxException {
         HashMap<String, CredentialsConfig.Account> map = new HashMap<>();
-        map.put("test1", new CredentialsConfig.Account(){{
+        map.put("test1", new CredentialsConfig.Account() {{
             setName("test1");
             setAccountId("1");
         }});
-        map.put("test2", new CredentialsConfig.Account(){{
+        map.put("test2", new CredentialsConfig.Account() {{
             setName("test2");
             setAccountId("2");
         }});
         HashMap<String, ECSCredentialsConfig.Account> mapECS = new HashMap<>();
-        mapECS.put("test1-ecs", new ECSCredentialsConfig.Account(){{
+        mapECS.put("test1-ecs", new ECSCredentialsConfig.Account() {{
             setName("test1-ecs");
             setAwsAccount("test-1");
-        }} );
-        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/"){{
+        }});
+        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/") {{
             setEcsAccounts(mapECS);
             setEc2Accounts(map);
         }};
