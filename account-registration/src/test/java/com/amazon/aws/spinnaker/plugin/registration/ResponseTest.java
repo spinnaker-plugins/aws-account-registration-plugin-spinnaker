@@ -49,26 +49,26 @@ public class ResponseTest {
             setName("test3");
             setAccountId("3");
             setAssumeRole("role/role3");
-            setRegions(new ArrayList<>(Arrays.asList("lambda", "ec2")));
+            setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
             setEnabled(true);
-            setProviders(new ArrayList());
+            setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
         accounts.put("test4", new Account() {{
             setName("test4");
             setAccountId("4");
-            setAssumeRole("role/role4");
-            setRegions(new ArrayList<>(Arrays.asList("lambda")));
+            setAssumeRole("role4");
+            setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
             setEnabled(true);
-            setProviders(new ArrayList());
+            setProviders(new ArrayList(Arrays.asList("ecs")));
         }});
         accounts.put("test5", new Account() {{
             setName("test5");
             setAccountId("5");
             setAssumeRole("role/role5");
-            setRegions(new ArrayList<>(Arrays.asList("lambda")));
+            setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
             setEnabled(true);
             setStatus("SUSPENDED");
-            setProviders(new ArrayList());
+            setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
 
         Response response = new Response();
