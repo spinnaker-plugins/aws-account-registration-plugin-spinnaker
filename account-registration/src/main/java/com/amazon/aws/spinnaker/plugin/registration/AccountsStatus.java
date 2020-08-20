@@ -51,7 +51,6 @@ public class AccountsStatus {
     public List<String> deletedAccounts;
     private String lastSyncTime;
     private String lastAttemptedTIme;
-    @Value("${accountProvision.url:http://localhost:8080}")
     private String remoteHostUrl;
     @Value("${accountProvision.iamAuth:false}")
     private boolean iamAuth;
