@@ -80,10 +80,13 @@ class AmazonPollingSynchronizer {
     }
 
     void sync() {
+        log.debug("Checking remote host for account updates.");
         boolean process = accountsStatus.getDesiredAccounts();
         if (!process) {
+            log.debug("Nothing to do.");
             return;
         }
+        log.info("{} accounts will be updated in credential repository.", accountsStatus.getECSAccountsAsList().size());
         // Sync Amazon credentials in repo
         // CANNOT use defaultAmazonAccountsSynchronizer. Otherwise it will remove ECS accounts everytime there is a change
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
@@ -97,6 +100,7 @@ class AmazonPollingSynchronizer {
                 catsModule
         );
         // Sync ECS credentials in repo
+        log.info("Syncing {} ECS accounts.", accountsStatus.getECSAccountsAsList().size());
         ecsCredentialsConfig.setAccounts(accountsStatus.getECSAccountsAsList());
         try {
             EcsProviderUtils.synchronizeEcsAccounts(lazyLoadCredentialsRepository, credentialsLoader,
@@ -122,5 +126,6 @@ class AmazonPollingSynchronizer {
             return;
         }
         accountsStatus.markSynced();
+        log.debug("Accounts synced successfully.");
     }
 }

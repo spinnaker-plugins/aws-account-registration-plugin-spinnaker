@@ -48,7 +48,6 @@ public class AccountsStatus {
     public HashMap<String, CredentialsConfig.Account> ec2Accounts;
     public HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     public List<String> deletedAccounts;
-
     private String lastSyncTime;
     private String lastAttemptedTIme;
     @Value("${accountProvision.url:http://localhost:8080}")
@@ -99,6 +98,7 @@ public class AccountsStatus {
             }
             response.setAccounts(accounts);
         }
+        log.debug("Finished gathering accounts. Processing {} accounts.", response.getEc2Accounts().size());
         response.convertCredentials();
         buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
         return true;
@@ -109,7 +109,7 @@ public class AccountsStatus {
                                            List<String> deletedAccounts) {
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
-        if (credentialsConfig.getAccounts() == null){
+        if (credentialsConfig.getAccounts() == null) {
             return;
         }
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
@@ -134,12 +134,14 @@ public class AccountsStatus {
                 ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
             }
         }
+        log.debug("Accounts to be updated: {}", ec2Accounts);
+        log.debug("ECS accounts to be updated: {}", ecsAccounts);
         this.setEc2Accounts(ec2Accounts);
         this.setEcsAccounts(ecsAccounts);
     }
 
     private Response getResourceFromRemoteHost(String url) {
-        log.debug("Getting account information from {}.", url);
+        log.info("Getting account information from {}.", url);
         Response response;
         if (iamAuth) {
             response = getResourceFromApiGateway(url);
@@ -152,6 +154,7 @@ public class AccountsStatus {
             return null;
         }
         if (response.accounts == null || response.accounts.isEmpty()) {
+            log.debug("No accounts returned from remote host.");
             return null;
         }
         String mostRecentTime = findMostRecentTime(response);
@@ -180,6 +183,7 @@ public class AccountsStatus {
             return callApiGateway(url);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.FORBIDDEN == e.getStatusCode()) {
+                log.info("Received 403 from API Gateway. Retrying..");
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
                     return null;
@@ -191,6 +195,7 @@ public class AccountsStatus {
     }
 
     private void makeHeaderGenerator(String url) {
+        log.debug("Generating AWS signature version 4 headers.");
         URI uri;
         try {
             uri = new URI(url);
@@ -204,6 +209,7 @@ public class AccountsStatus {
                     new BasicAWSCredentials(credentialsConfig.getAccessKeyId(), credentialsConfig.getSecretAccessKey())
             );
         } else {
+            log.debug("Attempting to obtain AWS credentials from default chain.");
             awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
         this.headerGenerator = new HeaderGenerator(
@@ -250,9 +256,12 @@ public class AccountsStatus {
             }
         }
         if (instants.isEmpty()) {
+            log.debug("No valid timestamps found.");
             return null;
         }
+        log.debug("Finding most recent timestamp, {}", instants);
         Instant oldest = Collections.max(instants);
+        log.debug("Most recent timestamp is {}", instants.toString());
         return oldest.toString();
     }
 

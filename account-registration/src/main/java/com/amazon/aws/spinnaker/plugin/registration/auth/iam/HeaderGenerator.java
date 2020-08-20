@@ -61,7 +61,7 @@ public class HeaderGenerator {
         return (TreeMap<String, String>) request.getHeaders();
     }
 
-    public void setURI(URI uri ) {
+    public void setURI(URI uri) {
         endpoint = uri;
     }
 }

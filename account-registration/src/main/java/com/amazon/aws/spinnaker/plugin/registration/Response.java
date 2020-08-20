@@ -22,11 +22,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 @Data
 public class Response {
 
@@ -106,6 +108,9 @@ public class Response {
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
+        log.debug("Retrieved accounts {}", ec2Accounts);
+        log.debug("Retrieved ECS accounts {}", ecsAccounts);
+        log.debug("Accounts to be deleted {}", deletedAccounts);
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
