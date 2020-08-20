@@ -73,5 +73,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: '[Example] Update Release Repository - ${{ steps.get_project_info.outputs.VERSION }}'
+          base: 'feature/github-actions'
           team-reviewers: |
             owners
