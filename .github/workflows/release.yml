@@ -65,14 +65,7 @@ jobs:
         run: |
           git config user.name 'Release Bot'
           git config user.email 'release-bot@users.noreply.github.com'
+          git checkout -b ${{ steps.get_project_info.outputs.VERSION }}
           git add plugins.json
           git commit -m "updating release repository"
-      - name: create pull request
-        id: create-pull-request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: '[Example] Update Release Repository - ${{ steps.get_project_info.outputs.VERSION }}'
-          base: 'feature/github-actions'
-          team-reviewers: |
-            owners
+          git push -u origin ${{ steps.get_project_info.outputs.VERSION }} 
