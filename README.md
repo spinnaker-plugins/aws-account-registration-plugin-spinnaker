@@ -1,5 +1,10 @@
 ## Spinnaker Plugin for Dynamic Account Registration
 
+### Requirements
+1. Must be used with Spinnaker version 1.20 or higher.
+2. Must enable [Lambda support](https://kb.armory.io/s/article/AWS-Lambda-Custom-Webhook-Stages).
+3. Must enable [ECS support](https://spinnaker.io/setup/install/providers/aws/aws-ecs/#clouddriver-yaml-properties)
+
 ### Usage
 1. Run `./gradlew releaseBundle` in the root of this project. 
 2. The above command will create a zip file, `build/distributions/spinnaker-aws-account-registration*.zip`.
@@ -34,7 +39,9 @@ accountProvision:
 This is fixed in [this PR](https://github.com/spinnaker/clouddriver/pull/4802). 
 
 ### Expected JSON payload
-This plugin expects the following JSON payload.
+This plugin expects the following JSON payload from the configured remote host, configured with the `url` property.
+
+
 ```json
 {
   "Accounts": [
