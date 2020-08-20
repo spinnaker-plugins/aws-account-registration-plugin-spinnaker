@@ -19,6 +19,7 @@ package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -27,9 +28,7 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -122,30 +121,38 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(nullResponse);
 
-            AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
-            assertFalse(status.getDesiredAccounts());
+        AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
+        assertFalse(status.getDesiredAccounts());
 
-            Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/hello.*"), Mockito.eq(Response.class)))
-                    .thenReturn(response);
-            Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/next.*"), Mockito.eq(Response.class)))
-                    .thenReturn(nextResponse);
-            assertTrue(status.getDesiredAccounts());
-            assertEquals("2020-08-17T15:17:48Z", status.getLastAttemptedTIme());
-            assertAll("Account should be overwritten by remote accounts",
-                    () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
-                    () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
-                    () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
-            );
-            assertAll("Account should be removed",
-                    () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
-                    () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
-            );
-            assertAll("Account from next URL should be added",
-                    () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
-                    () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
-            );
+        Mockito.when(mockRest.getForObject(Mockito.eq("http://localhost:8080/hello/"), Mockito.eq(Response.class)))
+                .thenReturn(response);
+        Mockito.when(mockRest.getForObject(Mockito.eq("http://localhost:8080/next/"), Mockito.eq(Response.class)))
+                .thenReturn(nextResponse);
+        assertTrue(status.getDesiredAccounts());
+        assertEquals("2020-08-17T15:17:48Z", status.getLastAttemptedTIme());
+        assertAll("Account should be overwritten by remote accounts",
+                () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
+                () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
+                () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
+        );
+        assertAll("Account should be removed",
+                () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
+                () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
+        );
+        assertAll("Account from next URL should be added",
+                () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
+                () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
+        );
 
 
+        Response emptyResponse = new Response() {{
+            setAccounts(new ArrayList<>());
+        }};
+        Mockito.when(mockRest.getForObject(Mockito.matches("http://localhost:8080/hello/.*"), Mockito.eq(Response.class)))
+                .thenReturn(emptyResponse);
+        AccountsStatus statusQueryString = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig,
+                "http://localhost:8080/hello?env=test");
+        assertFalse(statusQueryString.getDesiredAccounts());
 
         CredentialsConfig cc = new CredentialsConfig() {{
             setAccessKeyId("access");
@@ -158,12 +165,60 @@ public class AccountsStatusTest {
         }};
         ResponseEntity<Response> responseEntity = new ResponseEntity<Response>(response, HttpStatus.ACCEPTED);
         ResponseEntity<Response> responseEntityNext = new ResponseEntity<Response>(nextResponse, HttpStatus.ACCEPTED);
-        Mockito.when(mockRest.exchange(Mockito.matches("http://localhost:8080/apigateway.*"),
+        Mockito.when(mockRest.exchange(Mockito.eq("http://localhost:8080/apigateway/"),
                 Mockito.eq(HttpMethod.GET), Mockito.any(), Mockito.eq(Response.class))).thenReturn(responseEntity);
-        Mockito.when(mockRest.exchange(Mockito.matches("http://localhost:8080/next.*"),
+        Mockito.when(mockRest.exchange(Mockito.eq("http://localhost:8080/next/"),
                 Mockito.eq(HttpMethod.GET), Mockito.any(), Mockito.eq(Response.class))).thenReturn(responseEntityNext);
         assertTrue(statusAPIGateway.getDesiredAccounts());
+    }
 
+    @Test
+    public void TestMarkSynced() throws URISyntaxException {
+        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/") {{
+            setLastAttemptedTIme("now");
+        }};
+        status.markSynced();
+        assertEquals("now", status.getLastSyncTime());
+    }
 
+    @Test
+    public void TestGetEC2AccountsAsList() throws URISyntaxException {
+        HashMap<String, CredentialsConfig.Account> map = new HashMap<>();
+        map.put("test1", new CredentialsConfig.Account(){{
+            setName("test1");
+            setAccountId("1");
+        }});
+        map.put("test2", new CredentialsConfig.Account(){{
+            setName("test2");
+            setAccountId("2");
+        }});
+        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/"){{
+            setEc2Accounts(map);
+        }};
+        assertEquals(2, status.getEC2AccountsAsList().size());
+
+    }
+
+    @Test
+    public void TestGetECSAccountsAsList() throws URISyntaxException {
+        HashMap<String, CredentialsConfig.Account> map = new HashMap<>();
+        map.put("test1", new CredentialsConfig.Account(){{
+            setName("test1");
+            setAccountId("1");
+        }});
+        map.put("test2", new CredentialsConfig.Account(){{
+            setName("test2");
+            setAccountId("2");
+        }});
+        HashMap<String, ECSCredentialsConfig.Account> mapECS = new HashMap<>();
+        mapECS.put("test1-ecs", new ECSCredentialsConfig.Account(){{
+            setName("test1-ecs");
+            setAwsAccount("test-1");
+        }} );
+        AccountsStatus status = new AccountsStatus(null, null, null, "http://localhost/"){{
+            setEcsAccounts(mapECS);
+            setEc2Accounts(map);
+        }};
+        assertEquals(1, status.getECSAccountsAsList().size());
     }
 }

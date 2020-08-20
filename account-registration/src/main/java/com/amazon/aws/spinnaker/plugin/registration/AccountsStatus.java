@@ -69,13 +69,7 @@ public class AccountsStatus {
         this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
-        URI uri = new URI(url);
-        String path = uri.getPath();
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        if (path != null && !path.endsWith("/")) {
-            builder.replacePath(path + "/");
-        }
-        this.remoteHostUrl = builder.toUriString();
+        this.remoteHostUrl = buildSig4LibURL(url);
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
@@ -94,19 +88,33 @@ public class AccountsStatus {
         String nextUrl = response.getPagination().getNextUrl();
         if (!"".equals(nextUrl)) {
             List<Account> accounts = response.getAccounts();
-            while (!"".equals(nextUrl)) {
-                log.debug("Calling next URL, {}", nextUrl);
-                Response nextResponse = getResourceFromRemoteHost(nextUrl);
-                if (nextResponse != null) {
-                    accounts.addAll(nextResponse.getAccounts());
-                    nextUrl = nextResponse.getPagination().getNextUrl();
-                    continue;
+            while ( nextUrl != null && !"".equals(nextUrl)) {
+                try {
+                    String formattedURL =  buildSig4LibURL(nextUrl);
+                    log.debug("Calling next URL, {}", formattedURL);
+                    Response nextResponse = getResourceFromRemoteHost(formattedURL);
+                    if (nextResponse != null) {
+                        accounts.addAll(nextResponse.getAccounts());
+                        nextUrl = nextResponse.getPagination().getNextUrl();
+                        continue;
+                    }
+                    nextUrl = null;
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                    break;
                 }
-                nextUrl = null;
             }
             response.setAccounts(accounts);
         }
+        if (response.getAccounts().isEmpty()) {
+            return false;
+        }
         log.debug("Finished gathering accounts. Processing {} accounts.", response.getAccounts().size());
+        String mostRecentTime = findMostRecentTime(response);
+        if (mostRecentTime == null) {
+            return false;
+        }
+        this.lastAttemptedTIme = mostRecentTime;
         response.convertCredentials();
         buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
         return true;
@@ -165,11 +173,6 @@ public class AccountsStatus {
             log.debug("No accounts returned from remote host.");
             return null;
         }
-        String mostRecentTime = findMostRecentTime(response);
-        if (mostRecentTime == null) {
-            return null;
-        }
-        this.lastAttemptedTIme = mostRecentTime;
         return response;
     }
 
@@ -271,4 +274,15 @@ public class AccountsStatus {
         return oldest.toString();
     }
 
+    private String buildSig4LibURL(String url) throws URISyntaxException {
+        log.debug("Given url: {}", url);
+        URI uri = new URI(url);
+        String path = uri.getPath();
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+        if (path != null && !path.endsWith("/")) {
+            builder.replacePath(path + "/");
+        }
+        log.debug("Final url: {}", builder.toUriString());
+        return builder.toUriString();
+    }
 }
