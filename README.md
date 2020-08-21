@@ -22,10 +22,7 @@ spinnaker:
         enabled: true
     repositories: {}
     strict-plugin-loading: false
-```
-
-### Available configuration properties:
-```yaml
+# Available Plugin configuration properties:
 accountProvision:
   url: 'http://localhost:8080' # Remote host address. 
   pullFrequencyInMilliSeconds: 10000 # How often this plugin should query the remote host.
@@ -46,25 +43,24 @@ This plugin expects the following JSON payload from the configured remote host, 
 {
   "Accounts": [
     {
-      "AccountId": "123",
-      "AccountName": "account1",
-      "Regions": [
-        "us-west-2"
-      ],
-      "Status": "ACTIVE|SUSPENDED",
-      "SpinnakerAssumeRole": "role/role1",
-      "SpinnakerProviders": [
-        "ECS", "Lambda"
-      ],
-      "SpinnakerEnabled": true,
-      "UpdatedAt": "2020-08-17T15:17:48Z"
+    "AccountId": "259950518779",
+    "SpinnakerAccountName": "mccloman-3",
+    "Regions": [
+      "us-west-2"
+    ],
+    "SpinnakerStatus": "ACTIVE",
+    "SpinnakerAssumeRole": "role/spinnakerManaged",
+    "SpinnakerProviders": [
+      "ecs", "lambda", "ec2"
+    ],
+    "SpinnakerId": "spinnaker1",
+    "CreatedAt": "1598026448909979587",
+    "UpdatedAt": "1598027546352337694"
     }
-
   ],
   "Pagination": {
-    "NextUrl": "localhost:8080/accounts/next"
+    "NextUrl": ""
   }
-
 }
 ```
 
