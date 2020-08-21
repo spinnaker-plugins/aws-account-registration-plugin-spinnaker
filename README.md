@@ -54,8 +54,8 @@ This plugin expects the following JSON payload from the configured remote host, 
       "ecs", "lambda", "ec2"
     ],
     "SpinnakerId": "spinnaker1",
-    "CreatedAt": "1598026448909979587",
-    "UpdatedAt": "1598027546352337694"
+    "CreatedAt": "2020-08-21T16:32:26.352337694Z",
+    "UpdatedAt": "2020-08-21T16:32:26.352337694Z"
     }
   ],
   "Pagination": {
