@@ -111,9 +111,11 @@ public class AccountsStatus {
             return false;
         }
         this.lastAttemptedTIme = mostRecentTime;
-        response.convertCredentials();
-        buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
-        return true;
+        if (response.convertCredentials()) {
+            buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
+            return true;
+        }
+        return false;
     }
 
     private void buildDesiredAccountConfig(HashMap<String, CredentialsConfig.Account> ec2Accounts,

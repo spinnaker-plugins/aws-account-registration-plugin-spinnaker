@@ -17,14 +17,17 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
+import com.amazonaws.regions.Region;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import com.amazonaws.regions.RegionUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,6 +37,11 @@ public class Response {
 
     Response() {
         this.accounts = new ArrayList<>();
+        this.regions = new ArrayList<>();
+        List<Region> awsRegions = RegionUtils.getRegions();
+        for (Region awsRegion : awsRegions) {
+            regions.add(awsRegion.getName());
+        }
     }
 
     @JsonProperty("Accounts")
@@ -48,6 +56,8 @@ public class Response {
     HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     @JsonIgnore
     List<String> deletedAccounts;
+    @JsonIgnore
+    List<String> regions;
 
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
@@ -78,14 +88,17 @@ public class Response {
         return ec2Account;
     }
 
-    public void convertCredentials() {
+    public boolean convertCredentials() {
         HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
         for (Account account : accounts) {
             log.trace(account.toString());
+            if (!shouldConvert(account)) {
+                continue;
+            }
             String accountName = account.getName();
-            if (ec2Accounts.get(account.getName()) != null) {
+            if (ec2Accounts.get(accountName) != null) {
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
@@ -115,5 +128,32 @@ public class Response {
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
+        if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty()) {
+            log.debug("No accounts to process.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean shouldConvert(Account account) {
+        for (String attributes : new ArrayList<>(Arrays.asList(
+                account.getName(), account.getAccountId(), account.getAssumeRole(), account.getStatus()
+        ))) {
+            if (attributes == null || attributes.trim().isEmpty()) {
+                log.error("Received account contained a field which is null or empty. Account: {}", account);
+                return false;
+            }
+        }
+        if (account.getRegions() == null || account.getRegions().isEmpty()) {
+            log.error("Received account's region was null or empty. Account: {}", account);
+            return false;
+        }
+        for (String regionInResponse : account.getRegions()) {
+            if (!regions.contains(regionInResponse.trim()))  {
+                log.error("Invalid region was specified. Region: {}", regionInResponse);
+                return false;
+            }
+        }
+        return true;
     }
 }
