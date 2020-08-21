@@ -18,18 +18,15 @@
 package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.amazonaws.regions.Region;
+import com.amazonaws.regions.RegionUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import com.amazonaws.regions.RegionUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Data
@@ -37,7 +34,7 @@ public class Response {
 
     Response() {
         this.accounts = new ArrayList<>();
-        this.regions = new ArrayList<>();
+        this.regions = new HashSet<>();
         List<Region> awsRegions = RegionUtils.getRegions();
         for (Region awsRegion : awsRegions) {
             regions.add(awsRegion.getName());
@@ -57,7 +54,7 @@ public class Response {
     @JsonIgnore
     List<String> deletedAccounts;
     @JsonIgnore
-    List<String> regions;
+    Set<String> regions;
 
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
@@ -149,7 +146,7 @@ public class Response {
             return false;
         }
         for (String regionInResponse : account.getRegions()) {
-            if (!regions.contains(regionInResponse.trim()))  {
+            if (!regions.contains(regionInResponse.trim())) {
                 log.error("Invalid region was specified. Region: {}", regionInResponse);
                 return false;
             }

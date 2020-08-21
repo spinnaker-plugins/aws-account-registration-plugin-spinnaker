@@ -21,8 +21,10 @@ import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -96,7 +98,7 @@ public class ResponseTest {
             setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
 
-        Response response = new Response(){{
+        Response response = new Response() {{
             setAccounts(new ArrayList<>(receivedAccounts.values()));
         }};
         response.convertCredentials();
@@ -128,8 +130,8 @@ public class ResponseTest {
                 assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount());
             }
         }
-        Response invalidResponse = new Response(){{
-           setAccounts(new ArrayList<>(invalidAccounts.values()));
+        Response invalidResponse = new Response() {{
+            setAccounts(new ArrayList<>(invalidAccounts.values()));
         }};
         assertFalse(invalidResponse.convertCredentials());
         assertAll("Should return empty lists.",

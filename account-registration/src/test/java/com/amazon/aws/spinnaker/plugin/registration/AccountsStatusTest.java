@@ -232,13 +232,13 @@ public class AccountsStatusTest {
     public void TestExceptions() {
         assertThrows(IllegalArgumentException.class,
                 () -> new AccountsStatus(null, null, null,
-                "invalid")
+                        "invalid")
         );
 
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList());
         }};
-        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig(){{
+        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig() {{
             setAccounts(new ArrayList());
         }};
 
