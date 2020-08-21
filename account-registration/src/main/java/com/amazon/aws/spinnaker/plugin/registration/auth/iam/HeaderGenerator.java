@@ -29,7 +29,7 @@ public class HeaderGenerator {
     private final String targetServiceName;
     private final AWSCredentialsProvider aWSCredentialsProvider;
     protected final AWS4Signer aws4Signer;
-    private final URI endpoint;
+    private URI endpoint;
 
     public HeaderGenerator(String targetServiceName, String region,
                            AWSCredentialsProvider aWSCredentialsProvider, URI endpoint) {
@@ -61,4 +61,7 @@ public class HeaderGenerator {
         return (TreeMap<String, String>) request.getHeaders();
     }
 
+    public void setURI(URI uri) {
+        endpoint = uri;
+    }
 }

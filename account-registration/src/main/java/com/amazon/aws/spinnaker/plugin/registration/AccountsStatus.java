@@ -34,10 +34,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Slf4j
@@ -46,10 +49,8 @@ public class AccountsStatus {
     public HashMap<String, CredentialsConfig.Account> ec2Accounts;
     public HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     public List<String> deletedAccounts;
-
-    private Long lastSyncTime;
-    private Long lastAttemptedTIme;
-    @Value("${accountProvision.url:http://localhost:8080}")
+    private String lastSyncTime;
+    private String lastAttemptedTIme;
     private String remoteHostUrl;
     @Value("${accountProvision.iamAuth:false}")
     private boolean iamAuth;
@@ -62,11 +63,13 @@ public class AccountsStatus {
 
     @Autowired
     AccountsStatus(
-            RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig
+            RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
+            @Value("${accountProvision.url:http://localhost:8080}") String url
     ) {
         this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
+        this.remoteHostUrl = buildSig4LibURL(url);
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
@@ -82,6 +85,32 @@ public class AccountsStatus {
         if (response == null) {
             return false;
         }
+        String nextUrl = response.getPagination().getNextUrl();
+        if (!"".equals(nextUrl)) {
+            List<Account> accounts = response.getAccounts();
+            while (nextUrl != null && !"".equals(nextUrl)) {
+                String formattedURL = buildSig4LibURL(nextUrl);
+                log.info("Calling next URL, {}", formattedURL);
+                Response nextResponse = getResourceFromRemoteHost(formattedURL);
+                if (nextResponse != null) {
+                    accounts.addAll(nextResponse.getAccounts());
+                    nextUrl = nextResponse.getPagination().getNextUrl();
+                    continue;
+                }
+                nextUrl = null;
+            }
+            response.setAccounts(accounts);
+        }
+        if (response.getAccounts().isEmpty()) {
+            return false;
+        }
+        log.info("Finished gathering accounts from remote host. Processing {} accounts.", response.getAccounts().size());
+        log.debug(response.getAccounts().toString());
+        String mostRecentTime = findMostRecentTime(response);
+        if (mostRecentTime == null) {
+            return false;
+        }
+        this.lastAttemptedTIme = mostRecentTime;
         response.convertCredentials();
         buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
         return true;
@@ -92,6 +121,10 @@ public class AccountsStatus {
                                            List<String> deletedAccounts) {
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
+
+        if (credentialsConfig.getAccounts() == null) {
+            return;
+        }
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
             for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
                 if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
@@ -114,12 +147,14 @@ public class AccountsStatus {
                 ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
             }
         }
+        log.debug("Accounts to be updated: {}", ec2Accounts);
+        log.debug("ECS accounts to be updated: {}", ecsAccounts);
         this.setEc2Accounts(ec2Accounts);
         this.setEcsAccounts(ecsAccounts);
     }
 
     private Response getResourceFromRemoteHost(String url) {
-        log.debug("Getting account information from {}.", url);
+        log.info("Getting account information from {}.", url);
         Response response;
         if (iamAuth) {
             response = getResourceFromApiGateway(url);
@@ -127,15 +162,14 @@ public class AccountsStatus {
             response = getResources(url);
         }
 
-        if (response == null || response.bookmark == null) {
-            log.error("Response from remote host was null or did not receive a valid bookmark.");
+        if (response == null) {
+            log.error("Response from remote host was invalid.");
             return null;
         }
-        if (response.accounts == null) {
-            lastSyncTime = response.bookmark;
+        if (response.accounts == null || response.accounts.isEmpty()) {
+            log.debug("No accounts returned from remote host.");
             return null;
         }
-        this.lastAttemptedTIme = response.bookmark;
         return response;
     }
 
@@ -144,9 +178,6 @@ public class AccountsStatus {
     }
 
     private Response getResourceFromApiGateway(String url) {
-        if (!url.endsWith("/")) {
-            remoteHostUrl = String.format("%s/", url);
-        }
         if (this.headerGenerator == null) {
             makeHeaderGenerator(url);
             if (this.headerGenerator == null) {
@@ -154,20 +185,22 @@ public class AccountsStatus {
             }
         }
         try {
-            return callApiGateway();
+            return callApiGateway(url);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.FORBIDDEN == e.getStatusCode()) {
+                log.info("Received 403 from API Gateway. Retrying..");
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
                     return null;
                 }
-                return callApiGateway();
+                return callApiGateway(url);
             }
         }
         return null;
     }
 
     private void makeHeaderGenerator(String url) {
+        log.debug("Generating AWS signature version 4 headers.");
         URI uri;
         try {
             uri = new URI(url);
@@ -181,6 +214,7 @@ public class AccountsStatus {
                     new BasicAWSCredentials(credentialsConfig.getAccessKeyId(), credentialsConfig.getSecretAccessKey())
             );
         } else {
+            log.debug("Attempting to obtain AWS credentials from default chain.");
             awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
         this.headerGenerator = new HeaderGenerator(
@@ -189,18 +223,19 @@ public class AccountsStatus {
     }
 
     private Response getResources(String url) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         if (lastSyncTime != null) {
-            url = String.format("%s?after=%s", url, lastSyncTime.toString());
+            builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
-        return restTemplate.getForObject(url, Response.class);
+        return restTemplate.getForObject(builder.toUriString(), Response.class);
     }
 
-    private Response callApiGateway() {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(remoteHostUrl);
+    private Response callApiGateway(String url) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HashMap<String, String> queryStrings = new HashMap<>();
         if (lastSyncTime != null) {
-            queryStrings.put("after", lastSyncTime.toString());
-            builder.queryParam("after", lastSyncTime.toString());
+            queryStrings.put("UpdatedAt.gt", lastSyncTime);
+            builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
         TreeMap<String, String> generatedHeaders = headerGenerator.generateHeaders(queryStrings);
         HttpHeaders headers = new HttpHeaders();
@@ -217,4 +252,34 @@ public class AccountsStatus {
         return response.getBody();
     }
 
+    private String findMostRecentTime(Response response) {
+        List<Instant> instants = new ArrayList();
+        for (Account account : response.getAccounts()) {
+            try {
+                instants.add(Instant.parse(account.getUpdatedAt()));
+            } catch (DateTimeParseException e) {
+                log.error(String.format("Unable to parse date string, %s.", account.getUpdatedAt()));
+            }
+        }
+        if (instants.isEmpty()) {
+            log.debug("No valid timestamps found.");
+            return null;
+        }
+        log.debug("Finding most recent timestamp, {}", instants);
+        Instant oldest = Collections.max(instants);
+        log.debug("Most recent timestamp is {}", oldest.toString());
+        return oldest.toString();
+    }
+
+    private String buildSig4LibURL(String url) {
+        log.debug("Given url: {}", url);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+        UriComponents components = builder.build();
+        String path = components.getPath();
+        if (path != null && !path.endsWith("/")) {
+            builder.replacePath(path + "/");
+        }
+        log.debug("Final url: {}", builder.toUriString());
+        return builder.toUriString();
+    }
 }

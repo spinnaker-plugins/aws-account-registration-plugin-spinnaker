@@ -22,10 +22,6 @@ import lombok.Data;
 
 @Data
 public class AccountPagination {
-    @JsonProperty("Limit")
-    private String limit;
     @JsonProperty("NextUrl")
     private String nextUrl;
-    @JsonProperty("CursorState")
-    private String cursorState;
 }

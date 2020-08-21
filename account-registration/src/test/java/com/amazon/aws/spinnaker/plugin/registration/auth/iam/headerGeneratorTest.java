@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class headerGeneratorTest {
@@ -48,8 +49,20 @@ public class headerGeneratorTest {
             HashMap<String, String> queryStrings = new HashMap<>();
             queryStrings.put("after", "123");
             TreeMap<String, String> headers = headerGenerator.generateHeaders(queryStrings);
+            assertAll("Headers should return expected values.",
+                    () -> assertEquals(headers.get("Host"), expectedHost),
+                    () -> assertEquals(headers.get("Authorization"), expectedAuth)
+            );
             assertEquals(headers.get("Host"), expectedHost);
             assertEquals(headers.get("Authorization"), expectedAuth);
+
+            headerGenerator.setURI(new URI("https://test.execute-api.us-west-2.amazonaws.com/test/accounts"));
+            TreeMap<String, String> headersWithoutSlash = headerGenerator.generateHeaders(queryStrings);
+            assertAll("Headers should return expected values.",
+                    () -> assertEquals(headers.get("Host"), expectedHost),
+                    () -> assertEquals(headers.get("Authorization"), expectedAuth)
+            );
+
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }

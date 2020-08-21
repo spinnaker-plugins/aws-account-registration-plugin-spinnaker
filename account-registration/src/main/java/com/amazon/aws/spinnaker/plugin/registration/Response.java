@@ -22,11 +22,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 @Data
 public class Response {
 
@@ -39,8 +41,6 @@ public class Response {
 
     @JsonProperty("Pagination")
     private AccountPagination pagination;
-    @JsonProperty("Bookmark")
-    Long bookmark;
 
     @JsonIgnore
     HashMap<String, CredentialsConfig.Account> ec2Accounts;
@@ -70,9 +70,9 @@ public class Response {
             setAssumeRole(account.getAssumeRole());
             setRegions(regions);
             setPermissions(account.getPermissions());
-            setEnvironment(account.getEnvironment());
+            setEnabled(true);
         }};
-        if (!account.getAssumeRole().startsWith("role/")) {
+        if (!account.getAssumeRole().toLowerCase().startsWith("role/")) {
             ec2Account.setAssumeRole(String.format("role/%s", account.getAssumeRole()));
         }
         return ec2Account;
@@ -83,31 +83,35 @@ public class Response {
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
         for (Account account : accounts) {
-            CredentialsConfig.Account exists = ec2Accounts.get(account.getName());
-            if (exists != null) {
+            log.trace(account.toString());
+            String accountName = account.getName();
+            if (ec2Accounts.get(account.getName()) != null) {
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
-                deletedAccounts.add(account.getName());
+                log.debug("Account, {}, will be removed: {}", accountName, account);
+                deletedAccounts.add(accountName);
                 continue;
             }
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
-            if (account.getEnabled() != null) {
-                ec2Account.setEnabled(account.getEnabled());
-            }
             for (String provider : account.getProviders()) {
-                if ("lambda".equals(provider)) {
+                if ("lambda".equals(provider.toLowerCase())) {
+                    log.debug("Enabling Lambda for {}", accountName);
                     ec2Account.setLambdaEnabled(true);
                     continue;
                 }
-                if ("ecs".equals(provider)) {
+                if ("ecs".equals(provider.toLowerCase())) {
+                    log.debug("Enabling ECS for {}", accountName);
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                 }
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
+        log.debug("Converted AWS accounts {}", ec2Accounts);
+        log.debug("Converted ECS accounts {}", ecsAccounts);
+        log.debug("Accounts to be deleted {}", deletedAccounts);
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
