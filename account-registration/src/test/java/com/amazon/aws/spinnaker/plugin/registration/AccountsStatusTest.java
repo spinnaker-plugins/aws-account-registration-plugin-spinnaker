@@ -80,6 +80,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
                     setUpdatedAt("2020-08-10T15:28:30.418433185Z");
+                    setStatus("ACTIVE");
                 }},
                 new Account() {{
                     setName("test9");
@@ -100,6 +101,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
                     setUpdatedAt("2020-08-12T15:28:30.418433185Z");
+                    setStatus("ACTIVE");
                 }}
         ));
 
