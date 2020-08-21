@@ -27,7 +27,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class Account {
-    @JsonProperty("AccountName")
+    @JsonProperty("SpinnakerAccountName")
     private String name; // required. MUST be unique.
     @JsonProperty("AccountId")
     private String accountId;  // required.
@@ -37,27 +37,15 @@ public class Account {
     private List<String> regions;  // required.
     @JsonProperty("SpinnakerProviders")
     private List<String> providers;  // required.
-    @JsonProperty("SpinnakerEnabled")
-    private Boolean enabled = false;  // required.
+    @JsonProperty("SpinnakerStatus")
+    private String status; // required.
     // Optional
-    @JsonProperty("DeletedAt")
-    private Long deletedAt;
     @JsonProperty("Permissions")
     private Permissions.Builder permissions;
-    @JsonProperty("Environment")
-    private String environment;
-    @JsonProperty("AccountArn")
-    private String accountArn;
-    @JsonProperty("AccountEmail")
-    private String accountEmail;
-    @JsonProperty("Profile")
-    private String profile;
-    @JsonProperty("ServiceId")
-    private String serviceId;
-    @JsonProperty("Status")
-    private String status;
     @JsonProperty("CreatedAt")
     private String createdAt;
     @JsonProperty("UpdatedAt")
     private String updatedAt;
+    @JsonProperty("SpinnakerId")
+    private String spinnakerId;
 }

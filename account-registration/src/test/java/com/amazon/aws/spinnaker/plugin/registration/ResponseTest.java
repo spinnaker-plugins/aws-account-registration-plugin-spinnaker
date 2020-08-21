@@ -34,7 +34,6 @@ public class ResponseTest {
             setAccountId("1");
             setAssumeRole("role/role1");
             setRegions(new ArrayList(Arrays.asList("us-west-2")));
-            setEnabled(true);
             setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
         }});
         accounts.put("test2", new Account() {{
@@ -42,7 +41,6 @@ public class ResponseTest {
             setAccountId("2");
             setAssumeRole("role2");
             setRegions(new ArrayList(Arrays.asList("us-west-2")));
-            setEnabled(true);
             setProviders(new ArrayList());
         }});
         accounts.put("test3", new Account() {{
@@ -50,7 +48,6 @@ public class ResponseTest {
             setAccountId("3");
             setAssumeRole("role/role3");
             setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
-            setEnabled(true);
             setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
         accounts.put("test4", new Account() {{
@@ -58,7 +55,6 @@ public class ResponseTest {
             setAccountId("4");
             setAssumeRole("role4");
             setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
-            setEnabled(true);
             setProviders(new ArrayList(Arrays.asList("ecs")));
         }});
         accounts.put("test5", new Account() {{
@@ -66,7 +62,6 @@ public class ResponseTest {
             setAccountId("5");
             setAssumeRole("role/role5");
             setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
-            setEnabled(true);
             setStatus("SUSPENDED");
             setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
@@ -87,8 +82,7 @@ public class ResponseTest {
             assertAll("Should return required account information",
                     () -> assertNotNull(ec2Account),
                     () -> assertEquals(sourceAccountName, ec2Account.getName()),
-                    () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId()),
-                    () -> assertSame(sourceInfo.getEnabled(), ec2Account.getEnabled())
+                    () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId())
             );
             String assumeRoleString = sourceInfo.getAssumeRole();
             if (!assumeRoleString.startsWith("role/")) {

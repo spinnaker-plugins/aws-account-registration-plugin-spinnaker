@@ -78,19 +78,17 @@ public class AccountsStatusTest {
                     setAccountId("1");
                     setAssumeRole("role/role1-1");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
-                    setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
-                    setUpdatedAt("2020-08-15T15:17:48Z");
+                    setUpdatedAt("2020-08-10T15:28:30.418433185Z");
                 }},
                 new Account() {{
                     setName("test9");
                     setAccountId("9");
                     setAssumeRole("role/role9");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
-                    setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ec2")));
                     setStatus("SUSPENDED");
-                    setUpdatedAt("2020-08-14T15:17:48Z");
+                    setUpdatedAt("2020-08-11T15:28:30.418433185Z");
                 }}
         ));
 
@@ -100,9 +98,8 @@ public class AccountsStatusTest {
                     setAccountId("8");
                     setAssumeRole("role/role1-8");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
-                    setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
-                    setUpdatedAt("2020-08-17T15:17:48Z");
+                    setUpdatedAt("2020-08-12T15:28:30.418433185Z");
                 }}
         ));
 
@@ -133,7 +130,7 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.eq("http://localhost:8080/next/"), Mockito.eq(Response.class)))
                 .thenReturn(nextResponse);
         assertTrue(status.getDesiredAccounts());
-        assertEquals("2020-08-17T15:17:48Z", status.getLastAttemptedTIme());
+        assertEquals("2020-08-12T15:28:30.418433185Z", status.getLastAttemptedTIme());
         assertAll("Account should be overwritten by remote accounts",
                 () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
                 () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
@@ -156,7 +153,7 @@ public class AccountsStatusTest {
                 .thenReturn(emptyResponse);
         AccountsStatus statusQueryString = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig,
                 "http://localhost:8080/hello?env=test");
-        statusQueryString.setLastSyncTime("2020-08-17T15:17:48Z");
+        statusQueryString.setLastSyncTime("2020-08-12T15:28:30.418433185Z");
         assertFalse(statusQueryString.getDesiredAccounts());
 
         CredentialsConfig cc = new CredentialsConfig() {{
@@ -251,7 +248,6 @@ public class AccountsStatusTest {
                     setAccountId("1");
                     setAssumeRole("role/role1-1");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
-                    setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
                     setUpdatedAt("2020-08-15T15:17:48Z");
                 }},
@@ -260,7 +256,6 @@ public class AccountsStatusTest {
                     setAccountId("9");
                     setAssumeRole("role/role9");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
-                    setEnabled(true);
                     setProviders(new ArrayList(Arrays.asList("ec2")));
                     setStatus("SUSPENDED");
                     setUpdatedAt("2020-08-14T15:17:48Z");

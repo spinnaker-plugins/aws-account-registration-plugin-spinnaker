@@ -46,7 +46,7 @@ class AmazonPollingSynchronizer {
     private final DefaultAccountConfigurationProperties defaultAccountConfigurationProperties;
     private CatsModule catsModule;
     // ECS accounts
-    private final ECSCredentialsConfig ecsCredentialsConfig;
+    private ECSCredentialsConfig ecsCredentialsConfig;
     private final ApplicationContext applicationContext;
     private EcsAccountMapper ecsAccountMapper;
 
@@ -57,14 +57,13 @@ class AmazonPollingSynchronizer {
             CredentialsConfig credentialsConfig,
             LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
             DefaultAccountConfigurationProperties defaultAccountConfigurationProperties,
-            ECSCredentialsConfig ecsCredentialsConfig, ApplicationContext applicationContext
+            ApplicationContext applicationContext
     ) {
         this.accountsStatus = accountsStatus;
         this.credentialsLoader = credentialsLoader;
         this.credentialsConfig = credentialsConfig;
         this.lazyLoadCredentialsRepository = lazyLoadCredentialsRepository;
         this.defaultAccountConfigurationProperties = defaultAccountConfigurationProperties;
-        this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.applicationContext = applicationContext;
     }
 
@@ -72,6 +71,11 @@ class AmazonPollingSynchronizer {
     @Autowired
     void setCatsModule(@Lazy CatsModule catsModule) {
         this.catsModule = catsModule;
+    }
+
+    @Autowired(required = false)
+    void setECSCredentialsConfig(ECSCredentialsConfig ecsCredentialsConfig) {
+        this.ecsCredentialsConfig = ecsCredentialsConfig;
     }
 
     @Scheduled(fixedDelayString = "${accountProvision.pullFrequencyInMilliSeconds:10000}")

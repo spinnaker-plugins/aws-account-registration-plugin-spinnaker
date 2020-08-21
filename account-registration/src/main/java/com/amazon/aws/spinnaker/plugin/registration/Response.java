@@ -70,7 +70,6 @@ public class Response {
             setAssumeRole(account.getAssumeRole());
             setRegions(regions);
             setPermissions(account.getPermissions());
-            setEnvironment(account.getEnvironment());
             setEnabled(true);
         }};
         if (!account.getAssumeRole().toLowerCase().startsWith("role/")) {
@@ -96,10 +95,6 @@ public class Response {
             }
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
-            if (account.getEnabled() != null) {
-                log.debug("Account, {}, will be disabled", accountName);
-                ec2Account.setEnabled(account.getEnabled());
-            }
             for (String provider : account.getProviders()) {
                 if ("lambda".equals(provider.toLowerCase())) {
                     log.debug("Enabling Lambda for {}", accountName);
