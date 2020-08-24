@@ -21,10 +21,7 @@ import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +34,7 @@ public class ResponseTest {
             setAccountId("1");
             setAssumeRole("role/role1");
             setStatus("ACTIVE");
-            setRegions(new ArrayList(Arrays.asList("us-west-2")));
+            setRegions(new ArrayList(Arrays.asList("us-WEST-2")));
             setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
         }});
         receivedAccounts.put("test2", new Account() {{
@@ -109,12 +106,20 @@ public class ResponseTest {
                 assertTrue(response.getDeletedAccounts().contains(sourceInfo.getName()));
                 continue;
             }
+
             CredentialsConfig.Account ec2Account = response.getEc2Accounts().get(sourceAccountName);
             assertAll("Should return required account information",
                     () -> assertNotNull(ec2Account),
                     () -> assertEquals(sourceAccountName, ec2Account.getName()),
                     () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId())
             );
+            Set<String> sourceRegions = new HashSet<>();
+            for (String sourceRegion : sourceInfo.getRegions()) {
+                sourceRegions.add(sourceRegion.trim().toLowerCase());
+            }
+            for ( CredentialsConfig.Region convertedRegion : ec2Account.getRegions()) {
+                assertTrue(sourceRegions.contains(convertedRegion.getName()));
+            }
             String assumeRoleString = sourceInfo.getAssumeRole();
             if (!assumeRoleString.startsWith("role/")) {
                 sourceInfo.setAssumeRole(String.format("role/%s", assumeRoleString));

@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccountsStatusTest {
 
     @Test
-    public void testGetDesiredAccounts() throws URISyntaxException {
+    public void testGetDesiredAccounts() {
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(
                     new CredentialsConfig.Account() {{

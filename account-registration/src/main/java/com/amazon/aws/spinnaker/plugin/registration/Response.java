@@ -68,7 +68,7 @@ public class Response {
         List<CredentialsConfig.Region> regions = new ArrayList<>();
         for (String region : account.getRegions()) {
             CredentialsConfig.Region regionToAdd = new CredentialsConfig.Region();
-            regionToAdd.setName(region);
+            regionToAdd.setName(region.trim().toLowerCase());
             regions.add(regionToAdd);
         }
         CredentialsConfig.Account ec2Account = new CredentialsConfig.Account() {{
@@ -106,12 +106,12 @@ public class Response {
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
             for (String provider : account.getProviders()) {
-                if ("lambda".equals(provider.toLowerCase())) {
+                if ("lambda".equals(provider.trim().toLowerCase())) {
                     log.debug("Enabling Lambda for {}", accountName);
                     ec2Account.setLambdaEnabled(true);
                     continue;
                 }
-                if ("ecs".equals(provider.toLowerCase())) {
+                if ("ecs".equals(provider.trim().toLowerCase())) {
                     log.debug("Enabling ECS for {}", accountName);
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
@@ -146,7 +146,7 @@ public class Response {
             return false;
         }
         for (String regionInResponse : account.getRegions()) {
-            if (!regions.contains(regionInResponse.trim())) {
+            if (!regions.contains(regionInResponse.trim().toLowerCase())) {
                 log.error("Invalid region was specified. Region: {}", regionInResponse);
                 return false;
             }
