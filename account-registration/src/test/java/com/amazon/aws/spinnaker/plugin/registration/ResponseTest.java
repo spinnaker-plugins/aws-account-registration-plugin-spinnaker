@@ -28,36 +28,40 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ResponseTest {
     @Test
     void TestGetAccountStatus() {
-        HashMap<String, Account> accounts = new HashMap<>();
-        accounts.put("test1", new Account() {{
+        HashMap<String, Account> receivedAccounts = new HashMap<>();
+        receivedAccounts.put("test1", new Account() {{
             setName("test1");
             setAccountId("1");
             setAssumeRole("role/role1");
-            setRegions(new ArrayList(Arrays.asList("us-west-2")));
+            setStatus("ACTIVE");
+            setRegions(new ArrayList(Arrays.asList("us-WEST-2")));
             setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
         }});
-        accounts.put("test2", new Account() {{
+        receivedAccounts.put("test2", new Account() {{
             setName("test2");
             setAccountId("2");
             setAssumeRole("role2");
+            setStatus("ACTIVE");
             setRegions(new ArrayList(Arrays.asList("us-west-2")));
             setProviders(new ArrayList());
         }});
-        accounts.put("test3", new Account() {{
+        receivedAccounts.put("test3", new Account() {{
             setName("test3");
             setAccountId("3");
             setAssumeRole("role/role3");
+            setStatus("ACTIVE");
             setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
             setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
-        accounts.put("test4", new Account() {{
+        receivedAccounts.put("test4", new Account() {{
             setName("test4");
             setAccountId("4");
             setAssumeRole("role4");
+            setStatus("ACTIVE");
             setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
             setProviders(new ArrayList(Arrays.asList("ecs")));
         }});
-        accounts.put("test5", new Account() {{
+        receivedAccounts.put("test5", new Account() {{
             setName("test5");
             setAccountId("5");
             setAssumeRole("role/role5");
@@ -66,24 +70,56 @@ public class ResponseTest {
             setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
         }});
 
-        Response response = new Response();
-        List<Account> accountList = new ArrayList<>();
-        accountList.addAll(accounts.values());
-        response.setAccounts(accountList);
+        HashMap<String, Account> invalidAccounts = new HashMap<>();
+        invalidAccounts.put("missingRequiredAttribute1", new Account() {{
+            setName("missingRequiredAttribute1");
+            setAccountId("5");
+            setAssumeRole("role/role5");
+            setRegions(new ArrayList<>(Arrays.asList("us-west-2")));
+            setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
+        }});
+        invalidAccounts.put("missingRegion", new Account() {{
+            setName("missingRegion");
+            setAccountId("5");
+            setAssumeRole("role/role5");
+            setStatus("ACTIVE");
+            setRegions(new ArrayList<>());
+            setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
+        }});
+        invalidAccounts.put("invalidRegion", new Account() {{
+            setName("invalidRegion");
+            setAccountId("5");
+            setAssumeRole("role/role5");
+            setStatus("ACTIVE");
+            setRegions(new ArrayList<>(Arrays.asList("invalidregion")));
+            setProviders(new ArrayList(Arrays.asList("lambda", "ec2")));
+        }});
+
+        Response response = new Response() {{
+            setAccounts(new ArrayList<>(receivedAccounts.values()));
+        }};
         response.convertCredentials();
-        for (Map.Entry<String, Account> entry : accounts.entrySet()) {
+        for (Map.Entry<String, Account> entry : receivedAccounts.entrySet()) {
             Account sourceInfo = entry.getValue();
             String sourceAccountName = entry.getKey();
             if ("SUSPENDED".equals(sourceInfo.getStatus()) || sourceInfo.getProviders().isEmpty() || sourceInfo.getProviders() == null) {
                 assertTrue(response.getDeletedAccounts().contains(sourceInfo.getName()));
                 continue;
             }
+
             CredentialsConfig.Account ec2Account = response.getEc2Accounts().get(sourceAccountName);
             assertAll("Should return required account information",
                     () -> assertNotNull(ec2Account),
                     () -> assertEquals(sourceAccountName, ec2Account.getName()),
                     () -> assertEquals(sourceInfo.getAccountId(), ec2Account.getAccountId())
             );
+            Set<String> sourceRegions = new HashSet<>();
+            for (String sourceRegion : sourceInfo.getRegions()) {
+                sourceRegions.add(sourceRegion.trim().toLowerCase());
+            }
+            for ( CredentialsConfig.Region convertedRegion : ec2Account.getRegions()) {
+                assertTrue(sourceRegions.contains(convertedRegion.getName()));
+            }
             String assumeRoleString = sourceInfo.getAssumeRole();
             if (!assumeRoleString.startsWith("role/")) {
                 sourceInfo.setAssumeRole(String.format("role/%s", assumeRoleString));
@@ -99,5 +135,14 @@ public class ResponseTest {
                 assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount());
             }
         }
+        Response invalidResponse = new Response() {{
+            setAccounts(new ArrayList<>(invalidAccounts.values()));
+        }};
+        assertFalse(invalidResponse.convertCredentials());
+        assertAll("Should return empty lists.",
+                () -> assertTrue(invalidResponse.getEc2Accounts().isEmpty()),
+                () -> assertTrue(invalidResponse.getEcsAccounts().isEmpty()),
+                () -> assertTrue(invalidResponse.getDeletedAccounts().isEmpty())
+        );
     }
 }

@@ -61,6 +61,7 @@ dependencies {
   testImplementation 'com.netflix.spinnaker.clouddriver:clouddriver-security:5.67.0'
   testImplementation 'com.netflix.spinnaker.clouddriver:clouddriver-eureka:5.67.0'
   testImplementation 'com.netflix.spinnaker.clouddriver:clouddriver-core:5.67.0'
+  testImplementation 'com.netflix.spinnaker.fiat:fiat-core:1.22.0'
   testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.2"
   testImplementation group: 'io.strikt', name: 'strikt-core', version: '0.22.1'
   testImplementation group: 'dev.minutest', name: 'minutest', version: '1.10.0'

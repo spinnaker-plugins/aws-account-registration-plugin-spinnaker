@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccountsStatusTest {
 
     @Test
-    public void testGetDesiredAccounts() throws URISyntaxException {
+    public void testGetDesiredAccounts() {
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(
                     new CredentialsConfig.Account() {{
@@ -80,6 +80,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
                     setUpdatedAt("2020-08-10T15:28:30.418433185Z");
+                    setStatus("ACTIVE");
                 }},
                 new Account() {{
                     setName("test9");
@@ -100,6 +101,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
                     setUpdatedAt("2020-08-12T15:28:30.418433185Z");
+                    setStatus("ACTIVE");
                 }}
         ));
 
@@ -232,13 +234,13 @@ public class AccountsStatusTest {
     public void TestExceptions() {
         assertThrows(IllegalArgumentException.class,
                 () -> new AccountsStatus(null, null, null,
-                "invalid")
+                        "invalid")
         );
 
         CredentialsConfig credentialsConfig = new CredentialsConfig() {{
             setAccounts(new ArrayList());
         }};
-        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig(){{
+        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig() {{
             setAccounts(new ArrayList());
         }};
 
@@ -275,5 +277,68 @@ public class AccountsStatusTest {
         assertThrows(IllegalArgumentException.class,
                 () -> status.getDesiredAccounts());
 
+    }
+
+    @Test
+    public void testAccountDeletion() {
+
+        List<Account> correctAccounts = new ArrayList<Account>(Arrays.asList(
+                new Account() {{
+                    setName("test1");
+                    setAccountId("1");
+                    setAssumeRole("role/role1-1");
+                    setStatus("SUSPENDED");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+                    setUpdatedAt("2020-08-15T15:17:48Z");
+                }}
+        ));
+
+        Response response = new Response() {{
+            setAccounts(correctAccounts);
+            setPagination(new AccountPagination() {{
+            }});
+        }};
+
+        CredentialsConfig credentialsConfig = new CredentialsConfig() {{
+            setAccounts(new ArrayList<>(Arrays.asList(
+                    new CredentialsConfig.Account() {{
+                        setName("test1");
+                        setAccountId("1");
+                        setAssumeRole("role/role1");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(false);
+                        setEnabled(true);
+                    }},
+                    new CredentialsConfig.Account() {{
+                        setName("test9");
+                        setAccountId("9");
+                        setAssumeRole("role/role9");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(true);
+                        setEnabled(true);
+                    }}
+            )));
+        }};
+        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig() {{
+            setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
+                setName("test1-ecs");
+                setAwsAccount("test1");
+            }})));
+        }};
+
+        RestTemplate mockRest = Mockito.mock(RestTemplate.class);
+        Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
+                .thenReturn(response);
+
+        AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
+
+        assertTrue(status.getDesiredAccounts());
+        assertFalse(status.getEc2Accounts().containsKey("test1"));
+        assertFalse(status.getEcsAccounts().containsKey("test1-ecs"));
     }
 }

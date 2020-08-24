@@ -111,9 +111,11 @@ public class AccountsStatus {
             return false;
         }
         this.lastAttemptedTIme = mostRecentTime;
-        response.convertCredentials();
-        buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
-        return true;
+        if (response.convertCredentials()) {
+            buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
+            return true;
+        }
+        return false;
     }
 
     private void buildDesiredAccountConfig(HashMap<String, CredentialsConfig.Account> ec2Accounts,
@@ -146,6 +148,10 @@ public class AccountsStatus {
             if (currentECSAccount != null) {
                 ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
             }
+        }
+        for (String deletedAccount : deletedAccounts) {
+            ec2Accounts.remove(deletedAccount);
+            ecsAccounts.remove(deletedAccount + "-ecs");
         }
         log.debug("Accounts to be updated: {}", ec2Accounts);
         log.debug("ECS accounts to be updated: {}", ecsAccounts);

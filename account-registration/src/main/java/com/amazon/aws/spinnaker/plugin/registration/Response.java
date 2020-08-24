@@ -17,6 +17,8 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.RegionUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
@@ -24,9 +26,7 @@ import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Data
@@ -34,6 +34,11 @@ public class Response {
 
     Response() {
         this.accounts = new ArrayList<>();
+        this.regions = new HashSet<>();
+        List<Region> awsRegions = RegionUtils.getRegions();
+        for (Region awsRegion : awsRegions) {
+            regions.add(awsRegion.getName());
+        }
     }
 
     @JsonProperty("Accounts")
@@ -48,6 +53,8 @@ public class Response {
     HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
     @JsonIgnore
     List<String> deletedAccounts;
+    @JsonIgnore
+    Set<String> regions;
 
 
     private ECSCredentialsConfig.Account makeECSAccount(Account account) {
@@ -61,7 +68,7 @@ public class Response {
         List<CredentialsConfig.Region> regions = new ArrayList<>();
         for (String region : account.getRegions()) {
             CredentialsConfig.Region regionToAdd = new CredentialsConfig.Region();
-            regionToAdd.setName(region);
+            regionToAdd.setName(region.trim().toLowerCase());
             regions.add(regionToAdd);
         }
         CredentialsConfig.Account ec2Account = new CredentialsConfig.Account() {{
@@ -78,14 +85,17 @@ public class Response {
         return ec2Account;
     }
 
-    public void convertCredentials() {
+    public boolean convertCredentials() {
         HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
         for (Account account : accounts) {
             log.trace(account.toString());
+            if (!shouldConvert(account)) {
+                continue;
+            }
             String accountName = account.getName();
-            if (ec2Accounts.get(account.getName()) != null) {
+            if (ec2Accounts.get(accountName) != null) {
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
@@ -96,12 +106,12 @@ public class Response {
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
             for (String provider : account.getProviders()) {
-                if ("lambda".equals(provider.toLowerCase())) {
+                if ("lambda".equals(provider.trim().toLowerCase())) {
                     log.debug("Enabling Lambda for {}", accountName);
                     ec2Account.setLambdaEnabled(true);
                     continue;
                 }
-                if ("ecs".equals(provider.toLowerCase())) {
+                if ("ecs".equals(provider.trim().toLowerCase())) {
                     log.debug("Enabling ECS for {}", accountName);
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
@@ -115,5 +125,32 @@ public class Response {
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
+        if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty()) {
+            log.debug("No accounts to process.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean shouldConvert(Account account) {
+        for (String attributes : new ArrayList<>(Arrays.asList(
+                account.getName(), account.getAccountId(), account.getAssumeRole(), account.getStatus()
+        ))) {
+            if (attributes == null || attributes.trim().isEmpty()) {
+                log.error("Received account contained a field which is null or empty. Account: {}", account);
+                return false;
+            }
+        }
+        if (account.getRegions() == null || account.getRegions().isEmpty()) {
+            log.error("Received account's region was null or empty. Account: {}", account);
+            return false;
+        }
+        for (String regionInResponse : account.getRegions()) {
+            if (!regions.contains(regionInResponse.trim().toLowerCase())) {
+                log.error("Invalid region was specified. Region: {}", regionInResponse);
+                return false;
+            }
+        }
+        return true;
     }
 }
