@@ -41,7 +41,7 @@ public class Response {
         }
     }
 
-    @JsonProperty("Accounts")
+    @JsonProperty("SpinnakerAccounts")
     List<Account> accounts;
 
     @JsonProperty("Pagination")
