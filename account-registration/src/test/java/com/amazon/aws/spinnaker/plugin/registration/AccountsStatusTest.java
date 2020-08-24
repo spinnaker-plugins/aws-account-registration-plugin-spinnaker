@@ -278,4 +278,82 @@ public class AccountsStatusTest {
                 () -> status.getDesiredAccounts());
 
     }
+
+    @Test
+    public void testAccountDeletion() {
+
+        List<Account> correctAccounts = new ArrayList<Account>(Arrays.asList(
+                new Account() {{
+                    setName("test1");
+                    setAccountId("1");
+                    setAssumeRole("role/role1-1");
+                    setStatus("SUSPENDED");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+                    setUpdatedAt("2020-08-15T15:17:48Z");
+                }}
+        ));
+
+        Response response = new Response() {{
+            setAccounts(correctAccounts);
+            setPagination(new AccountPagination() {{
+            }});
+        }};
+
+        CredentialsConfig credentialsConfig = new CredentialsConfig() {{
+            setAccounts(new ArrayList<>(Arrays.asList(
+                    new CredentialsConfig.Account() {{
+                        setName("test1");
+                        setAccountId("1");
+                        setAssumeRole("role/role1");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(false);
+                        setEnabled(true);
+                    }},
+                    new CredentialsConfig.Account() {{
+                        setName("test9");
+                        setAccountId("9");
+                        setAssumeRole("role/role9");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(true);
+                        setEnabled(true);
+                    }}
+            )));
+        }};
+        ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig() {{
+            setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
+                setName("test1-ecs");
+                setAwsAccount("test1");
+            }})));
+        }};
+
+        RestTemplate mockRest = Mockito.mock(RestTemplate.class);
+        Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
+                .thenReturn(response);
+
+        AccountsStatus status = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/");
+
+        assertTrue(status.getDesiredAccounts());
+        assertFalse(status.getEc2Accounts().containsKey("test1"));
+        assertFalse(status.getEcsAccounts().containsKey("test1-ecs"));
+
+//        assertEquals("2020-08-12T15:28:30.418433185Z", status.getLastAttemptedTIme());
+//        assertAll("Account should be overwritten by remote accounts",
+//                () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
+//                () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
+//                () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
+//        );
+//        assertAll("Account should be removed",
+//                () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
+//                () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
+//        );
+//        assertAll("Account from next URL should be added",
+//                () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
+//                () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
+//        );
+    }
 }

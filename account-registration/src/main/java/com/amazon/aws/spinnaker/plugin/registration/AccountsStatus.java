@@ -149,6 +149,14 @@ public class AccountsStatus {
                 ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
             }
         }
+        for (String deletedAccount : deletedAccounts) {
+            if (ec2Accounts.containsKey(deletedAccount)) {
+                ec2Accounts.remove(deletedAccount);
+            };
+            if (ecsAccounts.containsKey(deletedAccount + "-ecs")) {
+                ecsAccounts.remove(deletedAccount + "-ecs");
+            }
+        }
         log.debug("Accounts to be updated: {}", ec2Accounts);
         log.debug("ECS accounts to be updated: {}", ecsAccounts);
         this.setEc2Accounts(ec2Accounts);
