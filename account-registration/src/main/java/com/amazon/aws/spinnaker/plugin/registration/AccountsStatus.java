@@ -150,12 +150,8 @@ public class AccountsStatus {
             }
         }
         for (String deletedAccount : deletedAccounts) {
-            if (ec2Accounts.containsKey(deletedAccount)) {
-                ec2Accounts.remove(deletedAccount);
-            };
-            if (ecsAccounts.containsKey(deletedAccount + "-ecs")) {
-                ecsAccounts.remove(deletedAccount + "-ecs");
-            }
+            ec2Accounts.remove(deletedAccount);
+            ecsAccounts.remove(deletedAccount + "-ecs");
         }
         log.debug("Accounts to be updated: {}", ec2Accounts);
         log.debug("ECS accounts to be updated: {}", ecsAccounts);

@@ -340,20 +340,5 @@ public class AccountsStatusTest {
         assertTrue(status.getDesiredAccounts());
         assertFalse(status.getEc2Accounts().containsKey("test1"));
         assertFalse(status.getEcsAccounts().containsKey("test1-ecs"));
-
-//        assertEquals("2020-08-12T15:28:30.418433185Z", status.getLastAttemptedTIme());
-//        assertAll("Account should be overwritten by remote accounts",
-//                () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
-//                () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
-//                () -> assertTrue(status.getEc2Accounts().get("test1").getLambdaEnabled())
-//        );
-//        assertAll("Account should be removed",
-//                () -> assertFalse(status.getEc2Accounts().containsKey("test9")),
-//                () -> assertFalse(status.getEcsAccounts().containsKey("test9-ecs"))
-//        );
-//        assertAll("Account from next URL should be added",
-//                () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
-//                () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
-//        );
     }
 }
