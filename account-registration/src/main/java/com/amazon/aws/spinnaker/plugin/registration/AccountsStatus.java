@@ -112,7 +112,8 @@ public class AccountsStatus {
         }
         this.lastAttemptedTIme = mostRecentTime;
         if (response.convertCredentials()) {
-            buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts());
+            buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts(),
+                    response.getAccountsToCheck());
             return true;
         }
         return false;
@@ -120,7 +121,7 @@ public class AccountsStatus {
 
     private void buildDesiredAccountConfig(HashMap<String, CredentialsConfig.Account> ec2Accounts,
                                            HashMap<String, ECSCredentialsConfig.Account> ecsAccounts,
-                                           List<String> deletedAccounts) {
+                                           List<String> deletedAccounts, List<String> accountsToCheck) {
         // Always use external source as credentials repo's correct state.
         // TODO: need a better way to check for account existence in current credentials repo.
 
@@ -152,6 +153,11 @@ public class AccountsStatus {
         for (String deletedAccount : deletedAccounts) {
             ec2Accounts.remove(deletedAccount);
             ecsAccounts.remove(deletedAccount + "-ecs");
+        }
+        for (String ecsAccountsToRemove : accountsToCheck) {
+            String ecsAccountName = ecsAccountsToRemove + "-ecs";
+            log.debug("ECS account, {}, will be removed.", ecsAccountName );
+            ecsAccounts.remove(ecsAccountName);
         }
         log.debug("Accounts to be updated: {}", ec2Accounts);
         log.debug("ECS accounts to be updated: {}", ecsAccounts);
