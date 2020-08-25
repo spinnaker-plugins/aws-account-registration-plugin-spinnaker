@@ -35,7 +35,7 @@ public class ResponseTest {
             setAssumeRole("role/role1");
             setStatus("ACTIVE");
             setRegions(new ArrayList(Arrays.asList("us-WEST-2")));
-            setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
+            setProviders(new ArrayList(Arrays.asList("ECS", "lAmbda", "ec2")));
         }});
         receivedAccounts.put("test2", new Account() {{
             setName("test2");
@@ -126,10 +126,15 @@ public class ResponseTest {
             }
             assertEquals(sourceInfo.getAssumeRole(), ec2Account.getAssumeRole());
 
-            if (sourceInfo.getProviders().contains("lambda")) {
+            ListIterator<String> iterator = sourceInfo.getProviders().listIterator();
+            HashSet<String> cleanedProviders = new HashSet<>();
+            while (iterator.hasNext()) {
+                cleanedProviders.add(iterator.next().toLowerCase().trim());
+            }
+            if (cleanedProviders.contains("lambda")) {
                 assertTrue(ec2Account.getLambdaEnabled());
             }
-            if (sourceInfo.getProviders().contains("ecs")) {
+            if (cleanedProviders.contains("ecs")) {
                 ECSCredentialsConfig.Account ecsAccount = response.getEcsAccounts().get(sourceAccountName + "-ecs");
                 assertNotNull(ecsAccount);
                 assertEquals(sourceInfo.getName(), ecsAccount.getAwsAccount());

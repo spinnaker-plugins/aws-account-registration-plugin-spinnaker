@@ -62,6 +62,16 @@ public class AccountsStatusTest {
                         }})));
                         setLambdaEnabled(true);
                         setEnabled(true);
+                    }},
+                    new CredentialsConfig.Account() {{
+                        setName("test20");
+                        setAccountId("20");
+                        setAssumeRole("role/role20");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(true);
+                        setEnabled(true);
                     }}
             )));
         }};
@@ -69,6 +79,10 @@ public class AccountsStatusTest {
             setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
                 setName("test9-ecs");
                 setAwsAccount("test9");
+            }})));
+            setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
+                setName("test20-ecs");
+                setAwsAccount("test20");
             }})));
         }};
 
@@ -89,6 +103,15 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ec2")));
                     setStatus("SUSPENDED");
+                    setUpdatedAt("2020-08-11T15:28:30.418433185Z");
+                }},
+                new Account() {{
+                    setName("test20");
+                    setAccountId("20");
+                    setAssumeRole("role/role20");
+                    setRegions(new ArrayList(Arrays.asList("us-west-2")));
+                    setProviders(new ArrayList(Arrays.asList("ec2")));
+                    setStatus("ACTIVE");
                     setUpdatedAt("2020-08-11T15:28:30.418433185Z");
                 }}
         ));
@@ -145,6 +168,9 @@ public class AccountsStatusTest {
         assertAll("Account from next URL should be added",
                 () -> assertTrue(status.getEc2Accounts().containsKey("test8")),
                 () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
+        );
+        assertAll("ECS account should be removed",
+        () -> assertFalse(status.getEcsAccounts().containsKey("test20-ecs"))
         );
 
 

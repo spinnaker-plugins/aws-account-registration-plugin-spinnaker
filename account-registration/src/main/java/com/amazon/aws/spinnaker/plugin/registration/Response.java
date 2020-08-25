@@ -54,6 +54,8 @@ public class Response {
     @JsonIgnore
     List<String> deletedAccounts;
     @JsonIgnore
+    List<String> accountsToCheck;
+    @JsonIgnore
     Set<String> regions;
 
 
@@ -89,6 +91,7 @@ public class Response {
         HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
+        List<String> accountsToCheck = new ArrayList<>();
         for (Account account : accounts) {
             log.trace(account.toString());
             if (!shouldConvert(account)) {
@@ -105,26 +108,32 @@ public class Response {
             }
             CredentialsConfig.Account ec2Account = makeEC2Account(account);
             ec2Account.setLambdaEnabled(false);
-            for (String provider : account.getProviders()) {
-                if ("lambda".equals(provider.trim().toLowerCase())) {
+            Set<String> cleanedProviders = generateCleanedSet(account.getProviders());
+            for (String provider : cleanedProviders) {
+                if ("lambda".equals(provider)) {
                     log.debug("Enabling Lambda for {}", accountName);
                     ec2Account.setLambdaEnabled(true);
                     continue;
                 }
-                if ("ecs".equals(provider.trim().toLowerCase())) {
+                if ("ecs".equals(provider)) {
                     log.debug("Enabling ECS for {}", accountName);
                     ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
                     ecsAccounts.put(ecsAccount.getName(), ecsAccount);
                 }
+            }
+            if (!cleanedProviders.contains("ecs")) {
+                accountsToCheck.add(accountName);
             }
             ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
         log.debug("Converted AWS accounts {}", ec2Accounts);
         log.debug("Converted ECS accounts {}", ecsAccounts);
         log.debug("Accounts to be deleted {}", deletedAccounts);
+        log.debug("Accounts to ensure providers are disabled: {}", accountsToCheck);
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
+        this.accountsToCheck = accountsToCheck;
         if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty()) {
             log.debug("No accounts to process.");
             return false;
@@ -152,5 +161,14 @@ public class Response {
             }
         }
         return true;
+    }
+
+    private HashSet<String> generateCleanedSet(List<String> providedList) {
+        ListIterator<String> iterator = providedList.listIterator();
+        HashSet<String> setToReturn = new HashSet<>();
+        while (iterator.hasNext()) {
+            setToReturn.add(iterator.next().toLowerCase().trim());
+        }
+        return setToReturn;
     }
 }
