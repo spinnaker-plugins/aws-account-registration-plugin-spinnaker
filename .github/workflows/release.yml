@@ -16,7 +16,6 @@ name: Release
 
 on:
   push:
-    branches: [ master ]
     tags:
     - 'v*'
 
@@ -79,10 +78,10 @@ jobs:
       - name: merge plugins.json
         id: merge-plugin-repository
         env:
-          PLUGIN_FILE='./plugins.json'
-          PLUGIN_TEMP='./plugins-temp.json'
-          TEMP_FILE='./tmp.json'
-        run:
+          PLUGIN_FILE: './plugins.json'
+          PLUGIN_TEMP: './plugins-temp.json'
+          TEMP_FILE: './tmp.json'
+        run: |
           if !  [[ -f "$PLUGIN_FILE" ]]; then touch "$PLUGIN_FILE"; fi
           jq 'reduce inputs as $i (.; .releases += $i.releases)' "$PLUGIN_FILE" "$PLUGIN_TEMP" > "$TEMP_FILE"
           rm $PLUGIN_FILE
@@ -94,7 +93,7 @@ jobs:
         with:
             token: ${{ secrets.GITHUB_TOKEN }}
             commit-message: Update plugin repository file
-            title: '[EXAMPLE] Update Plugin Repository with Latest Release'
+            title: 'Update Plugin Repository with Latest Release'
             body: |
               - Dependency updates  
             branch: 'release-${{ steps.get_project_info.outputs.VERSION }}' 
