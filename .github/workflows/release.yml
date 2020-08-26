@@ -17,7 +17,7 @@ name: Release
 on:
   push:
     tags:
-    - 'v*'
+    - '*.*.*'
 
 jobs:
   build:
@@ -45,7 +45,7 @@ jobs:
           echo ::set-output name=PROJECT_KEBAB::$(basename `pwd` | sed 's/\([a-z0-9]\)\([A-Z]\)/\1_\L\2/g')
           echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
           echo ::set-output name=REPO::${GITHUB_REPOSITORY}
-          
+ 
       - name: create release
         id: create_release
         uses: actions/create-release@v1
@@ -82,8 +82,13 @@ jobs:
           PLUGIN_TEMP: './plugins-temp.json'
           TEMP_FILE: './tmp.json'
         run: |
-          if !  [[ -f "$PLUGIN_FILE" ]]; then touch "$PLUGIN_FILE"; fi
-          jq 'reduce inputs as $i (.; .releases += $i.releases)' "$PLUGIN_FILE" "$PLUGIN_TEMP" > "$TEMP_FILE"
+          if !  [[ -f "$PLUGIN_FILE" ]]; then 
+            touch "$PLUGIN_FILE"; 
+            echo [] >> "$PLUGIN_FILE";
+            jq 'reduce inputs as $i (.; .[0] = $i)' "$PLUGIN_FILE" "$PLUGIN_TEMP" > "$TEMP_FILE";
+          else
+            jq 'reduce inputs as $i (.; .[0].releases += $i.releases)' "$PLUGIN_FILE" "$PLUGIN_TEMP" > "$TEMP_FILE";
+          fi
           rm $PLUGIN_FILE
           rm $PLUGIN_TEMP 
           mv $TEMP_FILE $PLUGIN_FILE
@@ -95,5 +100,5 @@ jobs:
             commit-message: Update plugin repository file
             title: 'Update Plugin Repository with Latest Release'
             body: |
-              - Dependency updates  
+              - Updating plugins.json release definition file 
             branch: 'release-${{ steps.get_project_info.outputs.VERSION }}' 
