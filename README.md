@@ -6,10 +6,33 @@
 3. Must enable [ECS support](https://spinnaker.io/setup/install/providers/aws/aws-ecs/#clouddriver-yaml-properties)
 
 ### Usage
+1. Add the following to `clouddriver.yml` in the necessary [profile](https://spinnaker.io/reference/halyard/custom/#custom-profiles) to load plugin
+```yaml
+spinnaker:
+    extensibility:
+      plugins:
+        AWS.AccountRegistration:
+          id: AWS.AccountRegistration
+          enabled: true
+          version: <<plugin release version>>
+          extensions: {}
+      repositories:
+        awsAccountRegistrationPluginRepo:
+          id: awsAccountRegistrationPluginRepo
+          url: https://raw.githubusercontent.com/awslabs/aws-account-registration-plugin-spinnaker/master/plugins.json
+
+accountProvision:
+  url: <<account provider remote address>>
+  pullFrequencyInMilliSeconds: <<plugin pull frequency>>
+  syncAgentFrequencyInMilliSeconds: <<plugin agent scheduler frequency>>
+  iamAuth: <<IAM Authentication for API Gateway>>
+  iamAuthRegion: <<AWS Region for API Gateway. Required if iamAuth is true>>
+```
+
+### Manually Build and Load Plugin
 1. Run `./gradlew releaseBundle` in the root of this project. 
 2. The above command will create a zip file, `build/distributions/spinnaker-aws-account-registration*.zip`.
-3. Copy the zip file to Clouddriver plugin directory. Defaults to `/opt/clouddriver/plugins`. This directory can be 
-specified by the `plugins-root-path` configuration property.
+3. Copy the zip file to Clouddriver plugin directory. Defaults to `/opt/clouddriver/plugins`. This directory can be specified by the `plugins-root-path` configuration property.
 4. Enable the plugin by placing the following in [Clouddriver profile](https://spinnaker.io/reference/halyard/custom/#custom-profiles)
 
 
