@@ -1,0 +1,17 @@
+[
+  {
+    "id": "AWS.AccountRegistration",
+    "description": "AWS account registration.",
+    "provider": "https://aws.amazon.com",
+    "releases": [
+      {
+        "version": "0.0.1",
+        "date": "2020-08-26T16:15:22.351Z",
+        "requires": "clouddriver>=5.0.0",
+        "sha512sum": "0baf50e7dd94bf924973b70c4e5eaab354823fa31a2ec5debd127171bf318a374dc1363d78412ca6880d1c8d6b24871f471013ba0bde3b345a77904f261ab4a1",
+        "state": "RELEASE",
+        "url": "https://github.com/awslabs/aws-account-registration-plugin-spinnaker/releases/download/0.0.1/aws-account-registration-plugin-spinnaker-0.0.1.zip"
+      }
+    ]
+  }
+]
