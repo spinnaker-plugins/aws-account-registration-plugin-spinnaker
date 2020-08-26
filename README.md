@@ -6,7 +6,7 @@
 3. Must enable [ECS support](https://spinnaker.io/setup/install/providers/aws/aws-ecs/#clouddriver-yaml-properties)
 
 ### Usage
-1. Add the following to `clouddriver.yml` in the necessary [profile](https://spinnaker.io/reference/halyard/custom/#custom-profiles) to load plugin
+1. Add the following to `clouddriver.yml` in the necessary [profile](https://spinnaker.io/reference/halyard/custom/#custom-profiles) to load plugin.
 ```yaml
 spinnaker:
     extensibility:
@@ -68,7 +68,7 @@ This plugin expects the following JSON payload from the configured remote host, 
     "Regions": [
       "us-west-2"
     ],
-    "SpinnakerStatus": "ACTIVE",
+    "SpinnakerStatus": "ACTIVE | SUSPENDED",
     "SpinnakerAssumeRole": "role/spinnakerManaged",
     "SpinnakerProviders": [
       "ecs", "lambda", "ec2"
@@ -79,7 +79,7 @@ This plugin expects the following JSON payload from the configured remote host, 
     }
   ],
   "Pagination": {
-    "NextUrl": ""
+    "NextUrl": "http://some/next/url"
   }
 }
 ```
