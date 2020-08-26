@@ -1,7 +1,7 @@
 ## Spinnaker Plugin for Dynamic Account Registration
 
 ### Requirements
-1. Must be used with Spinnaker version 1.20 or higher.
+1. Must be used with Spinnaker version 1.22 or higher.
 2. Must enable [Lambda support](https://kb.armory.io/s/article/AWS-Lambda-Custom-Webhook-Stages).
 3. Must enable [ECS support](https://spinnaker.io/setup/install/providers/aws/aws-ecs/#clouddriver-yaml-properties)
 
@@ -31,9 +31,6 @@ accountProvision:
   iamAuthRegion: 'us-west-2' # Specify which region API Gateway is deployed. Required if `iamAuth` is enabled.
 ```
 
-### Known issues
-1. When creating lambda functions, on-demand cache update may fail. This seems to be a bug in caching agent in `clouddriver-lambda`.
-This is fixed in [this PR](https://github.com/spinnaker/clouddriver/pull/4802). 
 
 ### Expected JSON payload
 This plugin expects the following JSON payload from the configured remote host, configured with the `url` property.
@@ -41,7 +38,7 @@ This plugin expects the following JSON payload from the configured remote host, 
 
 ```json
 {
-  "Accounts": [
+  "SpinnakerAccounts": [
     {
     "AccountId": "259950518779",
     "SpinnakerAccountName": "mccloman-3",
