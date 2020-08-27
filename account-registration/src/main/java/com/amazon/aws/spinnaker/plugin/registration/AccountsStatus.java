@@ -32,7 +32,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -157,7 +156,7 @@ public class AccountsStatus {
         }
         for (String ecsAccountsToRemove : accountsToCheck) {
             String ecsAccountName = ecsAccountsToRemove + "-ecs";
-            log.debug("ECS account, {}, will be removed.", ecsAccountName );
+            log.debug("ECS account, {}, will be removed.", ecsAccountName);
             ecsAccounts.remove(ecsAccountName);
         }
         log.debug("Accounts to be updated: {}", ec2Accounts);
@@ -247,12 +246,12 @@ public class AccountsStatus {
 
     private Response callApiGateway(String url) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        HashMap<String, String> queryStrings = new HashMap<>();
+        HashMap<String, List<String>> queryStrings = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : builder.build().getQueryParams().entrySet()) {
-            queryStrings.put(entry.getKey(), String.join(",", entry.getValue()));
+            queryStrings.put(entry.getKey(), entry.getValue());
         }
         if (lastSyncTime != null) {
-            queryStrings.put("UpdatedAt.gt", lastSyncTime);
+            queryStrings.put("UpdatedAt.gt", new ArrayList<String>(Collections.singletonList(lastSyncTime)));
             builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
         TreeMap<String, String> generatedHeaders = headerGenerator.generateHeaders(queryStrings);
