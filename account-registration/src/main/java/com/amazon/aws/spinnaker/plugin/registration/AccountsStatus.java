@@ -32,6 +32,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -200,6 +201,7 @@ public class AccountsStatus {
             return callApiGateway(url);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.FORBIDDEN == e.getStatusCode()) {
+                log.error(e.getMessage());
                 log.info("Received 403 from API Gateway. Retrying..");
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
@@ -215,7 +217,8 @@ public class AccountsStatus {
         log.debug("Generating AWS signature version 4 headers.");
         URI uri;
         try {
-            uri = new URI(url);
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+            uri = new URI(builder.replaceQuery("").toUriString());
         } catch (URISyntaxException e) {
             e.printStackTrace();
             return;
@@ -245,6 +248,9 @@ public class AccountsStatus {
     private Response callApiGateway(String url) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HashMap<String, String> queryStrings = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : builder.build().getQueryParams().entrySet()) {
+            queryStrings.put(entry.getKey(), String.join(",", entry.getValue()));
+        }
         if (lastSyncTime != null) {
             queryStrings.put("UpdatedAt.gt", lastSyncTime);
             builder.queryParam("UpdatedAt.gt", lastSyncTime);
