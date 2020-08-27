@@ -23,7 +23,10 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.http.HttpMethodName;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
 
 public class HeaderGenerator {
     private final String targetServiceName;
@@ -42,18 +45,14 @@ public class HeaderGenerator {
         }};
     }
 
-    public TreeMap<String, String> generateHeaders(HashMap<String, String> params) {
+    public TreeMap<String, String> generateHeaders(HashMap<String, List<String>> params) {
         DefaultRequest request = new DefaultRequest(targetServiceName) {{
             setHttpMethod(HttpMethodName.GET);
             setEndpoint(endpoint);
             setResourcePath("");
         }};
         if (params != null) {
-            HashMap<String, List<String>> newParams = new HashMap<>();
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                newParams.put(entry.getKey(), new ArrayList<String>(Collections.singletonList(entry.getValue())));
-            }
-            request.setParameters(newParams);
+            request.setParameters(params);
         }
         request.setHeaders(Collections.singletonMap("Content-type", "application/json"));
         aws4Signer.sign(request, aWSCredentialsProvider.getCredentials());

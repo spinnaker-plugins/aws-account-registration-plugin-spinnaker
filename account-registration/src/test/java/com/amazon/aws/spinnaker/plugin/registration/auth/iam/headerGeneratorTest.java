@@ -46,8 +46,8 @@ public class headerGeneratorTest {
             calender.set(2020, 8, 8, 8, 8, 8);
             calender.setTimeZone(TimeZone.getTimeZone("UTC"));
             headerGenerator.aws4Signer.setOverrideDate(calender.getTime());
-            HashMap<String, String> queryStrings = new HashMap<>();
-            queryStrings.put("after", "123");
+            HashMap<String, List<String>> queryStrings = new HashMap<>();
+            queryStrings.put("after", new ArrayList<String>(Collections.singletonList("123")));
             TreeMap<String, String> headers = headerGenerator.generateHeaders(queryStrings);
             assertAll("Headers should return expected values.",
                     () -> assertEquals(headers.get("Host"), expectedHost),
