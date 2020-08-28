@@ -69,7 +69,7 @@ public class AccountsStatus {
         this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
-        this.remoteHostUrl = buildSig4LibURL(url);
+        this.remoteHostUrl = url;
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
@@ -89,9 +89,8 @@ public class AccountsStatus {
         if (!"".equals(nextUrl)) {
             List<Account> accounts = response.getAccounts();
             while (nextUrl != null && !"".equals(nextUrl)) {
-                String formattedURL = buildSig4LibURL(nextUrl);
-                log.info("Calling next URL, {}", formattedURL);
-                Response nextResponse = getResourceFromRemoteHost(formattedURL);
+                log.info("Calling next URL, {}", nextUrl);
+                Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
                     accounts.addAll(nextResponse.getAccounts());
                     nextUrl = nextResponse.getPagination().getNextUrl();
@@ -208,20 +207,14 @@ public class AccountsStatus {
                 }
                 return callApiGateway(url);
             }
+            e.printStackTrace();
         }
         return null;
     }
 
     private void makeHeaderGenerator(String url) {
         log.debug("Generating AWS signature version 4 headers.");
-        URI uri;
-        try {
-            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-            uri = new URI(builder.replaceQuery("").toUriString());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return;
-        }
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         AWSCredentialsProvider awsCredentialsProvider;
         if (credentialsConfig.getAccessKeyId() != null && credentialsConfig.getSecretAccessKey() != null) {
             awsCredentialsProvider = new AWSStaticCredentialsProvider(
@@ -232,7 +225,7 @@ public class AccountsStatus {
             awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
         this.headerGenerator = new HeaderGenerator(
-                "execute-api", region, awsCredentialsProvider, uri
+                "execute-api", region, awsCredentialsProvider, builder.replaceQuery("").toUriString()
         );
     }
 
@@ -286,17 +279,5 @@ public class AccountsStatus {
         Instant oldest = Collections.max(instants);
         log.debug("Most recent timestamp is {}", oldest.toString());
         return oldest.toString();
-    }
-
-    private String buildSig4LibURL(String url) {
-        log.debug("Given url: {}", url);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        UriComponents components = builder.build();
-        String path = components.getPath();
-        if (path != null && !path.endsWith("/")) {
-            builder.replacePath(path + "/");
-        }
-        log.debug("Final url: {}", builder.toUriString());
-        return builder.toUriString();
     }
 }

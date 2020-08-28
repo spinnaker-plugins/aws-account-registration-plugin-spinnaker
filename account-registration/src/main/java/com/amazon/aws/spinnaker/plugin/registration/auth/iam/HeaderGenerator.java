@@ -21,8 +21,10 @@ import com.amazonaws.DefaultRequest;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.http.HttpMethodName;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,12 +34,12 @@ public class HeaderGenerator {
     private final String targetServiceName;
     private final AWSCredentialsProvider aWSCredentialsProvider;
     protected final AWS4Signer aws4Signer;
-    private URI endpoint;
+    private String targetURL;
 
     public HeaderGenerator(String targetServiceName, String region,
-                           AWSCredentialsProvider aWSCredentialsProvider, URI endpoint) {
+                           AWSCredentialsProvider aWSCredentialsProvider, String targetURL) {
         this.aWSCredentialsProvider = aWSCredentialsProvider;
-        this.endpoint = endpoint;
+        this.targetURL = targetURL;
         this.targetServiceName = targetServiceName;
         this.aws4Signer = new AWS4Signer() {{
             setServiceName(targetServiceName);
@@ -46,10 +48,12 @@ public class HeaderGenerator {
     }
 
     public TreeMap<String, String> generateHeaders(HashMap<String, List<String>> params) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(targetURL);
+
         DefaultRequest request = new DefaultRequest(targetServiceName) {{
             setHttpMethod(HttpMethodName.GET);
-            setEndpoint(endpoint);
-            setResourcePath("");
+            setResourcePath(builder.build().getPath());
+            setEndpoint(builder.replacePath("").build().toUri());
         }};
         if (params != null) {
             request.setParameters(params);
@@ -60,7 +64,7 @@ public class HeaderGenerator {
         return (TreeMap<String, String>) request.getHeaders();
     }
 
-    public void setURI(URI uri) {
-        endpoint = uri;
+    public void setURI(String uri) {
+        targetURL = uri;
     }
 }
