@@ -21,20 +21,23 @@ import com.amazonaws.DefaultRequest;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.http.HttpMethodName;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
 
 public class HeaderGenerator {
     private final String targetServiceName;
     private final AWSCredentialsProvider aWSCredentialsProvider;
     protected final AWS4Signer aws4Signer;
-    private URI endpoint;
+    private String targetURL;
 
     public HeaderGenerator(String targetServiceName, String region,
-                           AWSCredentialsProvider aWSCredentialsProvider, URI endpoint) {
+                           AWSCredentialsProvider aWSCredentialsProvider, String targetURL) {
         this.aWSCredentialsProvider = aWSCredentialsProvider;
-        this.endpoint = endpoint;
+        this.targetURL = targetURL;
         this.targetServiceName = targetServiceName;
         this.aws4Signer = new AWS4Signer() {{
             setServiceName(targetServiceName);
@@ -42,18 +45,16 @@ public class HeaderGenerator {
         }};
     }
 
-    public TreeMap<String, String> generateHeaders(HashMap<String, String> params) {
+    public TreeMap<String, String> generateHeaders(HashMap<String, List<String>> params) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(targetURL);
+
         DefaultRequest request = new DefaultRequest(targetServiceName) {{
             setHttpMethod(HttpMethodName.GET);
-            setEndpoint(endpoint);
-            setResourcePath("");
+            setResourcePath(builder.build().getPath());
+            setEndpoint(builder.replacePath("").replaceQuery("").build().toUri());
         }};
         if (params != null) {
-            HashMap<String, List<String>> newParams = new HashMap<>();
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                newParams.put(entry.getKey(), new ArrayList<String>(Collections.singletonList(entry.getValue())));
-            }
-            request.setParameters(newParams);
+            request.setParameters(params);
         }
         request.setHeaders(Collections.singletonMap("Content-type", "application/json"));
         aws4Signer.sign(request, aWSCredentialsProvider.getCredentials());
@@ -61,7 +62,7 @@ public class HeaderGenerator {
         return (TreeMap<String, String>) request.getHeaders();
     }
 
-    public void setURI(URI uri) {
-        endpoint = uri;
+    public void setURI(String uri) {
+        targetURL = uri;
     }
 }

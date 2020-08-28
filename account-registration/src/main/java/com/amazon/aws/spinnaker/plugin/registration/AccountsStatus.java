@@ -28,18 +28,18 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
@@ -56,20 +56,20 @@ public class AccountsStatus {
     private boolean iamAuth;
     @Value("${accountProvision.iamAuthRegion:us-west-2}")
     private String region;
-    private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private final CredentialsConfig credentialsConfig;
     private final ECSCredentialsConfig ecsCredentialsConfig;
     private HeaderGenerator headerGenerator;
 
     @Autowired
     AccountsStatus(
-            RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
+            CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
             @Value("${accountProvision.url:http://localhost:8080}") String url
     ) {
-        this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
-        this.remoteHostUrl = buildSig4LibURL(url);
+        this.remoteHostUrl = url;
+        this.restTemplate = new RestTemplateBuilder().interceptors(new PlusEncoderInterceptor()).build();
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
@@ -89,9 +89,8 @@ public class AccountsStatus {
         if (!"".equals(nextUrl)) {
             List<Account> accounts = response.getAccounts();
             while (nextUrl != null && !"".equals(nextUrl)) {
-                String formattedURL = buildSig4LibURL(nextUrl);
-                log.info("Calling next URL, {}", formattedURL);
-                Response nextResponse = getResourceFromRemoteHost(formattedURL);
+                log.info("Calling next URL, {}", nextUrl);
+                Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
                     accounts.addAll(nextResponse.getAccounts());
                     nextUrl = nextResponse.getPagination().getNextUrl();
@@ -156,7 +155,7 @@ public class AccountsStatus {
         }
         for (String ecsAccountsToRemove : accountsToCheck) {
             String ecsAccountName = ecsAccountsToRemove + "-ecs";
-            log.debug("ECS account, {}, will be removed.", ecsAccountName );
+            log.debug("ECS account, {}, will be removed.", ecsAccountName);
             ecsAccounts.remove(ecsAccountName);
         }
         log.debug("Accounts to be updated: {}", ec2Accounts);
@@ -200,6 +199,7 @@ public class AccountsStatus {
             return callApiGateway(url);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.FORBIDDEN == e.getStatusCode()) {
+                log.error(e.getMessage());
                 log.info("Received 403 from API Gateway. Retrying..");
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
@@ -207,19 +207,12 @@ public class AccountsStatus {
                 }
                 return callApiGateway(url);
             }
+            throw e;
         }
-        return null;
     }
 
     private void makeHeaderGenerator(String url) {
         log.debug("Generating AWS signature version 4 headers.");
-        URI uri;
-        try {
-            uri = new URI(url);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return;
-        }
         AWSCredentialsProvider awsCredentialsProvider;
         if (credentialsConfig.getAccessKeyId() != null && credentialsConfig.getSecretAccessKey() != null) {
             awsCredentialsProvider = new AWSStaticCredentialsProvider(
@@ -230,7 +223,7 @@ public class AccountsStatus {
             awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
         this.headerGenerator = new HeaderGenerator(
-                "execute-api", region, awsCredentialsProvider, uri
+                "execute-api", region, awsCredentialsProvider, url
         );
     }
 
@@ -244,9 +237,12 @@ public class AccountsStatus {
 
     private Response callApiGateway(String url) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        HashMap<String, String> queryStrings = new HashMap<>();
+        HashMap<String, List<String>> queryStrings = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : builder.build().getQueryParams().entrySet()) {
+            queryStrings.put(entry.getKey(), entry.getValue());
+        }
         if (lastSyncTime != null) {
-            queryStrings.put("UpdatedAt.gt", lastSyncTime);
+            queryStrings.put("UpdatedAt.gt", new ArrayList<String>(Collections.singletonList(lastSyncTime)));
             builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
         TreeMap<String, String> generatedHeaders = headerGenerator.generateHeaders(queryStrings);
@@ -254,6 +250,7 @@ public class AccountsStatus {
         for (Map.Entry<String, String> entry : generatedHeaders.entrySet()) {
             headers.add(entry.getKey(), entry.getValue());
         }
+
         HttpEntity entity = new HttpEntity<>(headers);
         HttpEntity<Response> response = restTemplate.exchange(
                 builder.toUriString(),
@@ -266,9 +263,15 @@ public class AccountsStatus {
 
     private String findMostRecentTime(Response response) {
         List<Instant> instants = new ArrayList();
+        HashMap<Instant, String> map = new HashMap<>();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
         for (Account account : response.getAccounts()) {
             try {
-                instants.add(Instant.parse(account.getUpdatedAt()));
+                String updatedString = account.getUpdatedAt();
+                OffsetDateTime offsetDateTime = OffsetDateTime.parse(updatedString, timeFormatter);
+                Instant instant = Instant.from(offsetDateTime);
+                instants.add(instant);
+                map.put(instant, updatedString);
             } catch (DateTimeParseException e) {
                 log.error(String.format("Unable to parse date string, %s.", account.getUpdatedAt()));
             }
@@ -279,19 +282,8 @@ public class AccountsStatus {
         }
         log.debug("Finding most recent timestamp, {}", instants);
         Instant oldest = Collections.max(instants);
-        log.debug("Most recent timestamp is {}", oldest.toString());
-        return oldest.toString();
-    }
 
-    private String buildSig4LibURL(String url) {
-        log.debug("Given url: {}", url);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        UriComponents components = builder.build();
-        String path = components.getPath();
-        if (path != null && !path.endsWith("/")) {
-            builder.replacePath(path + "/");
-        }
-        log.debug("Final url: {}", builder.toUriString());
-        return builder.toUriString();
+        log.debug("Most recent timestamp is {}", oldest.toString());
+        return map.get(oldest);
     }
 }

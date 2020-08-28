@@ -19,6 +19,7 @@ package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.netflix.spinnaker.clouddriver.security.AccountCredentials;
 import com.netflix.spinnaker.clouddriver.security.MapBackedAccountCredentialsRepository;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,7 @@ class LazyLoadCredentialsRepository extends MapBackedAccountCredentialsRepositor
         this.synchronizer = synchronizer;
     }
 
+    @SneakyThrows
     @Override
     public AccountCredentials getOne(String key) {
         AccountCredentials cred = super.getOne(key);

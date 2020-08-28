@@ -39,7 +39,7 @@ accountProvision:
 ```yaml
 spinnaker:
   extensibility:
-    plugins-root-path: /opt/clouddriver/plugins
+    plugins-root-path: /opt/clouddriver/plugins # Specify plugin directory if necessary.
     plugins:
       AWS.AccountRegistration:
         enabled: true
@@ -47,7 +47,7 @@ spinnaker:
     strict-plugin-loading: false
 # Available Plugin configuration properties:
 accountProvision:
-  url: 'http://localhost:8080' # Remote host address. 
+  url: 'http://localhost:8080' # Remote host address. Query string is supported but must not include space characters.
   pullFrequencyInMilliSeconds: 10000 # How often this plugin should query the remote host.
   syncAgentFrequencyInMilliSeconds: 10000 # How often agent scheduler should run.
   iamAuth: false # Enable IAM authentication for API Gateway.
@@ -63,19 +63,19 @@ This plugin expects the following JSON payload from the configured remote host, 
 {
   "SpinnakerAccounts": [
     {
-    "AccountId": "259950518779",
-    "SpinnakerAccountName": "mccloman-3",
-    "Regions": [
-      "us-west-2"
-    ],
-    "SpinnakerStatus": "ACTIVE | SUSPENDED",
-    "SpinnakerAssumeRole": "role/spinnakerManaged",
-    "SpinnakerProviders": [
-      "ecs", "lambda", "ec2"
-    ],
-    "SpinnakerId": "spinnaker1",
-    "CreatedAt": "2020-08-21T16:32:26.352337694Z",
-    "UpdatedAt": "2020-08-21T16:32:26.352337694Z"
+      "AccountId": "12345678901",
+      "SpinnakerAccountName": "test-3",
+      "Regions": [
+        "us-west-2"
+      ],
+      "SpinnakerStatus": "ACTIVE | SUSPENDED",
+      "SpinnakerAssumeRole": "role/spinnakerManaged",
+      "SpinnakerProviders": [
+        "ecs", "lambda", "ec2"
+      ],
+      "SpinnakerId": "spinnaker1",
+      "CreatedAt": "2020-08-27T16:52:59.026696+00:00",
+      "UpdatedAt": "2020-08-27T16:52:59.026696+00:00"
     }
   ],
   "Pagination": {

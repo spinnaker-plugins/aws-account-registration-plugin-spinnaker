@@ -40,14 +40,14 @@ public class headerGeneratorTest {
         try {
             HeaderGenerator headerGenerator = new HeaderGenerator(
                     "execute-api", "us-west-2", new AWSStaticCredentialsProvider(credentials),
-                    new URI("https://test.execute-api.us-west-2.amazonaws.com/test/accounts/"));
+                    "https://test.execute-api.us-west-2.amazonaws.com/test/accounts/");
             // Need to override time to generate testable outputs.
             Calendar calender = new GregorianCalendar();
             calender.set(2020, 8, 8, 8, 8, 8);
             calender.setTimeZone(TimeZone.getTimeZone("UTC"));
             headerGenerator.aws4Signer.setOverrideDate(calender.getTime());
-            HashMap<String, String> queryStrings = new HashMap<>();
-            queryStrings.put("after", "123");
+            HashMap<String, List<String>> queryStrings = new HashMap<>();
+            queryStrings.put("after", new ArrayList<String>(Collections.singletonList("123")));
             TreeMap<String, String> headers = headerGenerator.generateHeaders(queryStrings);
             assertAll("Headers should return expected values.",
                     () -> assertEquals(headers.get("Host"), expectedHost),
@@ -55,8 +55,8 @@ public class headerGeneratorTest {
             );
             assertEquals(headers.get("Host"), expectedHost);
             assertEquals(headers.get("Authorization"), expectedAuth);
-
-            headerGenerator.setURI(new URI("https://test.execute-api.us-west-2.amazonaws.com/test/accounts"));
+            new URI("https://test.execute-api.us-west-2.amazonaws.com/test/accounts/");
+            headerGenerator.setURI("https://test.execute-api.us-west-2.amazonaws.com/test/accounts/");
             TreeMap<String, String> headersWithoutSlash = headerGenerator.generateHeaders(queryStrings);
             assertAll("Headers should return expected values.",
                     () -> assertEquals(headers.get("Host"), expectedHost),
