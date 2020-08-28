@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class LazyLoadCredentialsRepositoryTest {
     @Test
-    void testGetOne() {
+    void testGetOne() throws Throwable {
         AmazonPollingSynchronizer amazonPollingSynchronizer = Mockito.mock(AmazonPollingSynchronizer.class);
         LazyLoadCredentialsRepository lazyLoadCredentialsRepository = new LazyLoadCredentialsRepository() {{
             setSynchronizer(amazonPollingSynchronizer);

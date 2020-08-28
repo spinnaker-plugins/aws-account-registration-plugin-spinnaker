@@ -20,7 +20,6 @@ package com.amazon.aws.spinnaker.plugin.registration;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,7 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -171,7 +169,7 @@ public class AccountsStatusTest {
                 () -> assertTrue(status.getEcsAccounts().containsKey("test8-ecs"))
         );
         assertAll("ECS account should be removed",
-        () -> assertFalse(status.getEcsAccounts().containsKey("test20-ecs"))
+                () -> assertFalse(status.getEcsAccounts().containsKey("test20-ecs"))
         );
 
         AccountsStatus statusQueryString = new AccountsStatus(mockRest, credentialsConfig, ecsCredentialsConfig,

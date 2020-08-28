@@ -79,18 +79,18 @@ class AmazonPollingSynchronizer {
     }
 
     @Scheduled(fixedDelayString = "${accountProvision.pullFrequencyInMilliSeconds:10000}")
-    void schedule() {
+    void schedule() throws Throwable {
         sync();
     }
 
-    void sync() {
+    void sync() throws Throwable {
         log.debug("Checking remote host for account updates.");
         boolean process = accountsStatus.getDesiredAccounts();
         if (!process) {
             log.debug("Nothing to do.");
             return;
         }
-        log.info("{} accounts will be updated in credential repository.", accountsStatus.getECSAccountsAsList().size());
+        log.info("{} accounts will be updated in credential repository.", accountsStatus.getEC2AccountsAsList().size());
         // Sync Amazon credentials in repo
         // CANNOT use defaultAmazonAccountsSynchronizer. Otherwise it will remove ECS accounts everytime there is a change
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
@@ -105,30 +105,16 @@ class AmazonPollingSynchronizer {
         );
         // Sync ECS credentials in repo
         log.info("Syncing {} ECS accounts.", accountsStatus.getECSAccountsAsList().size());
-        ecsCredentialsConfig.setAccounts(accountsStatus.getECSAccountsAsList());
-        try {
-            EcsProviderUtils.synchronizeEcsAccounts(lazyLoadCredentialsRepository, credentialsLoader,
-                    ecsCredentialsConfig, catsModule);
-        } catch (Throwable throwable) {
-            log.error("Error encountered while adding ECS accounts: {}", throwable.getMessage());
-            return;
-        }
         // EcsAccountMapper is normally initialized and never refreshed. Need to refresh here.
-        try {
-            // Cannot autowire EcsAccountMapper for some reason. It returns every field wth null values.
-            // Doing it this way is a problem.
-            if (this.ecsAccountMapper == null) {
-                this.ecsAccountMapper = (EcsAccountMapper) applicationContext.getBean("ecsAccountMapper");
-            }
-            EcsProviderUtils.synchronizeEcsCredentialsMapper(ecsAccountMapper, lazyLoadCredentialsRepository);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            log.error("Error encountered while updating ECS credentials mapper: {}", e.getMessage());
-            e.printStackTrace();
-            return;
-        } catch (BeansException e) {
-            log.error("Error obtaining EcsAccountMapper bean from Spring context.");
-            return;
+        // Cannot autowire EcsAccountMapper for some reason. It returns every field wth null values.
+        // Doing it this way is a problem.
+        if (this.ecsAccountMapper == null) {
+            this.ecsAccountMapper = (EcsAccountMapper) applicationContext.getBean("ecsAccountMapper");
         }
+        ecsCredentialsConfig.setAccounts(accountsStatus.getECSAccountsAsList());
+        EcsProviderUtils.synchronizeEcsAccounts(lazyLoadCredentialsRepository, credentialsLoader,
+                ecsCredentialsConfig, catsModule);
+        EcsProviderUtils.synchronizeEcsCredentialsMapper(ecsAccountMapper, lazyLoadCredentialsRepository);
         accountsStatus.markSynced();
         log.debug("Accounts synced successfully.");
     }

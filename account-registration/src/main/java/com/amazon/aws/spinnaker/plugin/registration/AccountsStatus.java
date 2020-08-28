@@ -34,11 +34,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -209,9 +206,8 @@ public class AccountsStatus {
                 }
                 return callApiGateway(url);
             }
-            e.printStackTrace();
+            throw e;
         }
-        return null;
     }
 
     private void makeHeaderGenerator(String url) {
@@ -270,11 +266,11 @@ public class AccountsStatus {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
         for (Account account : response.getAccounts()) {
             try {
-                String updaetdString = account.getUpdatedAt();
-                OffsetDateTime offsetDateTime = OffsetDateTime.parse(updaetdString, timeFormatter);
-                Instant instant  = Instant.from(offsetDateTime);
+                String updatedString = account.getUpdatedAt();
+                OffsetDateTime offsetDateTime = OffsetDateTime.parse(updatedString, timeFormatter);
+                Instant instant = Instant.from(offsetDateTime);
                 instants.add(instant);
-                map.put(instant, updaetdString);
+                map.put(instant, updatedString);
             } catch (DateTimeParseException e) {
                 log.error(String.format("Unable to parse date string, %s.", account.getUpdatedAt()));
             }
