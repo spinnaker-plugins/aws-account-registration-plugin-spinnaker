@@ -6,9 +6,9 @@
     "releases": [
       {
         "version": "0.0.1",
-        "date": "2020-08-26T16:15:22.351Z",
+        "date": "2020-08-28T17:57:16.588Z",
         "requires": "clouddriver>=5.0.0",
-        "sha512sum": "0baf50e7dd94bf924973b70c4e5eaab354823fa31a2ec5debd127171bf318a374dc1363d78412ca6880d1c8d6b24871f471013ba0bde3b345a77904f261ab4a1",
+        "sha512sum": "caa36620a1905d6cb0a85d57a95811841e9f1856bf1bf7ed8b38e47e4933c180aa26494f0bfa3bf7628edf96fc4366113dae05ba33f1e82040ab6a494440250e",
         "state": "RELEASE",
         "url": "https://github.com/awslabs/aws-account-registration-plugin-spinnaker/releases/download/0.0.1/aws-account-registration-plugin-spinnaker-0.0.1.zip"
       }
