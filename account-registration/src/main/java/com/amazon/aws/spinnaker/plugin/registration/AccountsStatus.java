@@ -40,6 +40,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
@@ -264,9 +266,15 @@ public class AccountsStatus {
 
     private String findMostRecentTime(Response response) {
         List<Instant> instants = new ArrayList();
+        HashMap<Instant, String> map = new HashMap<>();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
         for (Account account : response.getAccounts()) {
             try {
-                instants.add(Instant.parse(account.getUpdatedAt()));
+                String updaetdString = account.getUpdatedAt();
+                OffsetDateTime offsetDateTime = OffsetDateTime.parse(updaetdString, timeFormatter);
+                Instant instant  = Instant.from(offsetDateTime);
+                instants.add(instant);
+                map.put(instant, updaetdString);
             } catch (DateTimeParseException e) {
                 log.error(String.format("Unable to parse date string, %s.", account.getUpdatedAt()));
             }
@@ -277,7 +285,8 @@ public class AccountsStatus {
         }
         log.debug("Finding most recent timestamp, {}", instants);
         Instant oldest = Collections.max(instants);
+
         log.debug("Most recent timestamp is {}", oldest.toString());
-        return oldest.toString();
+        return map.get(oldest);
     }
 }
