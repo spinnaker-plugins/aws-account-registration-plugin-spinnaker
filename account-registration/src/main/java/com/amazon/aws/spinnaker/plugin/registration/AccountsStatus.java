@@ -66,7 +66,6 @@ public class AccountsStatus {
             CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
             @Value("${accountProvision.url:http://localhost:8080}") String url
     ) {
-//        this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.remoteHostUrl = url;
@@ -287,8 +286,4 @@ public class AccountsStatus {
         log.debug("Most recent timestamp is {}", oldest.toString());
         return map.get(oldest);
     }
-
-//    public void setRestTemplate(RestTemplate restTemplate) {
-//        this.restTemplate = restTemplate;
-//    }
 }
