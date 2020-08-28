@@ -94,7 +94,7 @@ public class AccountsStatusTest {
                     setAssumeRole("role/role1-1");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
-                    setUpdatedAt("2020-08-10T15:28:30.418433185Z");
+                    setUpdatedAt("2020-08-25T16:52:59.026696+00:00");
                     setStatus("ACTIVE");
                 }},
                 new Account() {{
@@ -104,7 +104,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ec2")));
                     setStatus("SUSPENDED");
-                    setUpdatedAt("2020-08-11T15:28:30.418433185Z");
+                    setUpdatedAt("2020-08-22T16:52:59.026696+00:00");
                 }},
                 new Account() {{
                     setName("test20");
@@ -113,7 +113,7 @@ public class AccountsStatusTest {
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ec2")));
                     setStatus("ACTIVE");
-                    setUpdatedAt("2020-08-11T15:28:30.418433185Z");
+                    setUpdatedAt("2020-08-27T16:52:59.026696+00:00");
                 }}
         ));
 
@@ -124,7 +124,7 @@ public class AccountsStatusTest {
                     setAssumeRole("role/role1-8");
                     setRegions(new ArrayList(Arrays.asList("us-west-2")));
                     setProviders(new ArrayList(Arrays.asList("ecs", "lambda", "ec2")));
-                    setUpdatedAt("2020-08-12T15:28:30.418433185Z");
+                    setUpdatedAt("2020-08-28T16:52:59.026696+00:00");
                     setStatus("ACTIVE");
                 }}
         ));
@@ -156,7 +156,7 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.eq("http://localhost:8080/v/next"), Mockito.eq(Response.class)))
                 .thenReturn(nextResponse);
         assertTrue(status.getDesiredAccounts());
-        assertEquals("2020-08-12T15:28:30.418433185Z", status.getLastAttemptedTIme());
+        assertEquals("2020-08-28T16:52:59.026696+00:00", status.getLastAttemptedTIme());
         assertAll("Account should be overwritten by remote accounts",
                 () -> assertEquals(status.getEc2Accounts().get("test1").getAssumeRole(), "role/role1-1"),
                 () -> assertTrue(status.getEcsAccounts().containsKey("test1-ecs")),
