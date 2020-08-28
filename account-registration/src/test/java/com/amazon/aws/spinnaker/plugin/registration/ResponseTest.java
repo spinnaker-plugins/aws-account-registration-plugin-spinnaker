@@ -117,7 +117,7 @@ public class ResponseTest {
             for (String sourceRegion : sourceInfo.getRegions()) {
                 sourceRegions.add(sourceRegion.trim().toLowerCase());
             }
-            for ( CredentialsConfig.Region convertedRegion : ec2Account.getRegions()) {
+            for (CredentialsConfig.Region convertedRegion : ec2Account.getRegions()) {
                 assertTrue(sourceRegions.contains(convertedRegion.getName()));
             }
             String assumeRoleString = sourceInfo.getAssumeRole();
