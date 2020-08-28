@@ -28,6 +28,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -55,20 +56,21 @@ public class AccountsStatus {
     private boolean iamAuth;
     @Value("${accountProvision.iamAuthRegion:us-west-2}")
     private String region;
-    private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private final CredentialsConfig credentialsConfig;
     private final ECSCredentialsConfig ecsCredentialsConfig;
     private HeaderGenerator headerGenerator;
 
     @Autowired
     AccountsStatus(
-            RestTemplate restTemplate, CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
+            CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
             @Value("${accountProvision.url:http://localhost:8080}") String url
     ) {
-        this.restTemplate = restTemplate;
+//        this.restTemplate = restTemplate;
         this.credentialsConfig = credentialsConfig;
         this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.remoteHostUrl = url;
+        this.restTemplate = new RestTemplateBuilder().interceptors(new PlusEncoderInterceptor()).build();
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
@@ -212,7 +214,6 @@ public class AccountsStatus {
 
     private void makeHeaderGenerator(String url) {
         log.debug("Generating AWS signature version 4 headers.");
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         AWSCredentialsProvider awsCredentialsProvider;
         if (credentialsConfig.getAccessKeyId() != null && credentialsConfig.getSecretAccessKey() != null) {
             awsCredentialsProvider = new AWSStaticCredentialsProvider(
@@ -223,7 +224,7 @@ public class AccountsStatus {
             awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
         this.headerGenerator = new HeaderGenerator(
-                "execute-api", region, awsCredentialsProvider, builder.replaceQuery("").toUriString()
+                "execute-api", region, awsCredentialsProvider, url
         );
     }
 
@@ -250,6 +251,7 @@ public class AccountsStatus {
         for (Map.Entry<String, String> entry : generatedHeaders.entrySet()) {
             headers.add(entry.getKey(), entry.getValue());
         }
+
         HttpEntity entity = new HttpEntity<>(headers);
         HttpEntity<Response> response = restTemplate.exchange(
                 builder.toUriString(),
@@ -285,4 +287,8 @@ public class AccountsStatus {
         log.debug("Most recent timestamp is {}", oldest.toString());
         return map.get(oldest);
     }
+
+//    public void setRestTemplate(RestTemplate restTemplate) {
+//        this.restTemplate = restTemplate;
+//    }
 }

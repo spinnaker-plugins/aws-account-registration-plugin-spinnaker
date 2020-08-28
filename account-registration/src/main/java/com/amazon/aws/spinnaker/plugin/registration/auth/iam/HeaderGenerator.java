@@ -51,7 +51,7 @@ public class HeaderGenerator {
         DefaultRequest request = new DefaultRequest(targetServiceName) {{
             setHttpMethod(HttpMethodName.GET);
             setResourcePath(builder.build().getPath());
-            setEndpoint(builder.replacePath("").build().toUri());
+            setEndpoint(builder.replacePath("").replaceQuery("").build().toUri());
         }};
         if (params != null) {
             request.setParameters(params);

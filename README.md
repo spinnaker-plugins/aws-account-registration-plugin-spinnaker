@@ -47,7 +47,7 @@ spinnaker:
     strict-plugin-loading: false
 # Available Plugin configuration properties:
 accountProvision:
-  url: 'http://localhost:8080' # Remote host address. 
+  url: 'http://localhost:8080' # Remote host address. Query string is supported but must not include space characters.
   pullFrequencyInMilliSeconds: 10000 # How often this plugin should query the remote host.
   syncAgentFrequencyInMilliSeconds: 10000 # How often agent scheduler should run.
   iamAuth: false # Enable IAM authentication for API Gateway.
