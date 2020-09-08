@@ -38,7 +38,7 @@ jobs:
           ls -lhaR
           ls -lh build/distributions/
       - name: Upload bundle
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: bundle
           path: build/distributions/*.zip
