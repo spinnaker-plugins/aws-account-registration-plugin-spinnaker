@@ -40,7 +40,8 @@ jobs:
     needs: build
     name: integration test
     steps:
-      run: echo ${{needs.build.outputs.zip_path}}
+      - name: test
+        run: echo ${{needs.build.outputs.zip_path}}
 #      - uses: actions/download-artifact@v2
 #        with:
 #          name: my-artifact
