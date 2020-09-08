@@ -44,11 +44,15 @@ public class PlusEncoderInterceptor implements ClientHttpRequestInterceptor {
             @Override
             @Nonnull
             public URI getURI() {
-                URI u = super.getURI();
-                String strictlyEscapedQuery = StringUtils.replace(u.getRawQuery(), "+", "%2B");
-                return UriComponentsBuilder.fromUri(u)
-                        .replaceQuery(strictlyEscapedQuery)
-                        .build(true).toUri();
+                URI uri = super.getURI();
+                String rawQuery = uri.getRawQuery();
+                if (rawQuery != null && rawQuery.contains("+") ) {
+                    String strictlyEscapedQuery = StringUtils.replace(uri.getRawQuery(), "+", "%2B");
+                    return UriComponentsBuilder.fromUri(uri)
+                            .replaceQuery(strictlyEscapedQuery)
+                            .build(true).toUri();
+                }
+                return uri;
             }
         }, body);
     }
