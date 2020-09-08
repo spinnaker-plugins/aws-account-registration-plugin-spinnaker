@@ -33,7 +33,7 @@ jobs:
       - name: Get zip path
         id: zip_path
         run: |
-          a=$(find build/distributions/ -name '*.zip')
+          a=$(find build/distributions/ -name '*.zip' -printf "%f")
           echo "::set-output name=zip_path::$a"
       - name: Upload bundle
         uses: actions/upload-artifact@v2
@@ -48,10 +48,30 @@ jobs:
     needs: build
     name: integration test
     steps:
+      - uses: actions/checkout@v2
       - name: test
         run: echo ${{needs.build.outputs.zip_path}}
       - uses: actions/download-artifact@v2
         with:
           name: bundle
-      - name: test1
-        run: ls -lha
+      - name: Build docker image
+        run: |
+          docker build --build-arg targetVersion=1.22.0 --build-arg pluginFile=${{needs.build.outputs.zip_path}} \
+          -f .github/integration-testing/Dockerfile_bake_plugin -t test:plugin
+      - name: Run clouddriver
+        run: |
+          docker run -d --network=host --mount type=bind,src="$(pwd)"/.github/integration-testing/config,target=/opt/spinnaker/config test:plugin
+      - name: Prepare mock server
+        run: |
+          sudo add-apt-repository ppa:longsleep/golang-backports
+          sudo apt update
+          sudo apt install golang-go curl
+      - name: Run mock server
+        working-directory: .github/integration-testing/mock-server
+        run: |
+          go run server.go &
+      - name: Check mock server
+        run: 'curl localhost:8080/hello'
+
+
+
