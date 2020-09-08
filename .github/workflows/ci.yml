@@ -22,11 +22,19 @@ jobs:
         run: ./gradlew cleanTest test
       - name: Build with Gradle
         run: ./gradlew releaseBundle
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: Get zip path
         id: zip_path
         run: |
           a=$(find build/distributions/ -name '*.zip')
-          echo "::set-output zip_path=test::$a"
+          echo "::set-output name=zip_path::$a"
       - name: Upload bundle
         uses: actions/upload-artifact@v1
         with:
