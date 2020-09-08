@@ -58,18 +58,22 @@ public class AccountsStatus {
     private String region;
     private RestTemplate restTemplate;
     private final CredentialsConfig credentialsConfig;
-    private final ECSCredentialsConfig ecsCredentialsConfig;
+    private ECSCredentialsConfig ecsCredentialsConfig;
     private HeaderGenerator headerGenerator;
 
     @Autowired
     AccountsStatus(
-            CredentialsConfig credentialsConfig, ECSCredentialsConfig ecsCredentialsConfig,
+            CredentialsConfig credentialsConfig,
             @Value("${accountProvision.url:http://localhost:8080}") String url
     ) {
         this.credentialsConfig = credentialsConfig;
-        this.ecsCredentialsConfig = ecsCredentialsConfig;
         this.remoteHostUrl = url;
         this.restTemplate = new RestTemplateBuilder().interceptors(new PlusEncoderInterceptor()).build();
+    }
+
+    @Autowired(required = false)
+    void setECSCredentialsConfig(ECSCredentialsConfig ecsCredentialsConfig) {
+        this.ecsCredentialsConfig = ecsCredentialsConfig;
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
