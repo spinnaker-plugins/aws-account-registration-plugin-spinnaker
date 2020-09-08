@@ -1,4 +1,4 @@
-module basicserver
+module mock-server
 
 go 1.14
 
