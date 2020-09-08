@@ -35,6 +35,7 @@ jobs:
         run: |
           a=$(find build/distributions/ -name '*.zip')
           echo "::set-output name=zip_path::$a"
+          ls -lhaR
       - name: Upload bundle
         uses: actions/upload-artifact@v1
         with:
