@@ -64,9 +64,9 @@ jobs:
       - name: Prepare mock server
         run: |
           wget https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz
-          sudo add-apt-repository ppa:longsleep/golang-backports
-          sudo apt update
-          sudo apt install golang-go curl
+          tar -C /usr/local -xzf go.tar.gz
+          echo "::set-env name=PATH::$PATH:/usr/local/go/bin"
+          apt install netcat curl wget -y
       - name: Run mock server
         working-directory: .github/integration-testing/mock-server
         timeout-minutes: 5
