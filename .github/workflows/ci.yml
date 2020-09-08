@@ -49,6 +49,7 @@ jobs:
     name: integration test
     steps:
       - uses: actions/checkout@v2
+      - uses: satackey/action-docker-layer-caching@v0.0.8
       - name: test
         run: echo ${{needs.build.outputs.zip_path}}
       - uses: actions/download-artifact@v2
@@ -63,7 +64,7 @@ jobs:
           docker run -d --network=host --mount type=bind,src="$(pwd)"/.github/integration-testing/config,target=/opt/spinnaker/config test:plugin
       - name: Prepare mock server
         run: |
-          wget https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz
+          wget -q https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz
           sudo tar -C /usr/local -xzf go.tar.gz
           echo "::set-env name=PATH::$PATH:/usr/local/go/bin"
           sudo apt install netcat curl wget -y
@@ -76,11 +77,11 @@ jobs:
           while ! nc -z localhost 8080; do
             sleep 3
           done
-          slee 3
-      - name: Check mock server
-        run: |
-          curl localhost:8080/hello
-          curl localhost:7002/credentials
+          sleep 3
+#      - name: Check mock server
+#        run: |
+#          curl localhost:8080/hello
+#          curl localhost:7002/credentials
 
 
 
