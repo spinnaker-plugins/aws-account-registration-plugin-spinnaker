@@ -1,0 +1,29 @@
+accountProvision:
+  pullFrequencyInMilliSeconds: 3000
+  url: http://localhost:8080/hello
+
+archaius:
+  fixedDelayPollingScheduler:
+    delayMills: 2147483647
+    initialDelayMills: 2147483647
+aws:
+  accounts:
+    - accountId: "123"
+      assumeRole: role/spinnakerManaged
+      lambdaEnabled: true
+      lifecycleHooks: []
+      name: account-1
+      permissions: {}
+      providerVersion: V1
+      regions:
+        - name: us-west-2
+      requiredGroupMembership: []
+  lambda:
+    enabled: true
+spinnaker:
+  extensibility:
+    plugins:
+      AWS.AccountRegistration:
+        enabled: true
+  repositories: {}
+  strict-plugin-loading: false

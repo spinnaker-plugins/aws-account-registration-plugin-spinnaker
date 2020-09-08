@@ -1,0 +1,139 @@
+appengine:
+  accounts: []
+  enabled: false
+artifacts:
+  bitbucket:
+    accounts: []
+    enabled: false
+  gcs:
+    accounts: []
+    enabled: false
+  github:
+    accounts: []
+    enabled: false
+  gitlab:
+    accounts: []
+    enabled: false
+  gitrepo:
+    accounts: []
+    enabled: false
+  helm:
+    accounts: []
+    enabled: false
+  http:
+    accounts: []
+    enabled: false
+  maven:
+    accounts: []
+    enabled: false
+  oracle:
+    accounts: []
+    enabled: false
+  s3:
+    accounts: []
+    enabled: false
+  templates: []
+aws:
+  accessKeyId: ABCDEFGHIJK2
+  accounts:
+    - accountId: "123"
+      assumeRole: role/spinnakerManaged
+      lifecycleHooks: []
+      name: account-1
+      permissions: {}
+      providerVersion: V1
+      regions:
+        - name: us-west-2
+      requiredGroupMembership: []
+  bakeryDefaults:
+    baseImages: []
+  defaultKeyPairTemplate: '{{name}}-keypair'
+  defaultRegions:
+    - name: us-west-2
+  defaults:
+    iamRole: BaseIAMRole
+  enabled: true
+  primaryAccount: account-1
+  secretAccessKey: secret
+azure:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+    templateFile: azure-linux.json
+  enabled: false
+cloudfoundry:
+  accounts: []
+  enabled: false
+dcos:
+  accounts: []
+  clusters: []
+  enabled: false
+dockerRegistry:
+  accounts:
+    - address: https://index.docker.io
+      cacheIntervalSeconds: 60
+      cacheThreads: 1
+      clientTimeoutMillis: 60000
+      email: fake.email@spinnaker.io
+      insecureRegistry: false
+      name: my-ecr-registry
+      paginateSize: 100
+      permissions: {}
+      providerVersion: V1
+      repositories:
+        - nabuskey/public-test
+      requiredGroupMembership: []
+      sortTagsByDate: false
+      trackDigests: false
+  enabled: true
+  primaryAccount: my-ecr-registry
+ecs:
+  accounts:
+    - awsAccount: account-1
+      name: account-1-ecs
+      permissions: {}
+      providerVersion: V1
+      requiredGroupMembership: []
+  enabled: true
+  primaryAccount: account-1-ecs
+google:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+    network: default
+    templateFile: gce.json
+    useInternalIp: false
+    zone: us-central1-f
+  enabled: false
+huaweicloud:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+  enabled: false
+kubernetes:
+  accounts: []
+  enabled: false
+oracle:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+    templateFile: oci.json
+  enabled: false
+server:
+  address: ${services.clouddriver.host:localhost}
+  port: ${services.clouddriver.port:7002}
+spectator:
+  applicationName: ${spring.application.name}
+  webEndpoint:
+    enabled: false
+spinnaker:
+  extensibility:
+    plugins: {}
+    plugins-root-path: /opt/clouddriver/plugins
+    repositories: {}
+    strict-plugin-loading: false
+tencentcloud:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+  enabled: false
