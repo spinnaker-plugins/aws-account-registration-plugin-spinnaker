@@ -86,7 +86,7 @@ jobs:
         run: |
           curl -s localhost:8080/hello | jq -e '.SpinnakerAccounts[] | select(.SpinnakerAccountName == "account-3")'
           sleep 30
-          curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "defaults")'
+          curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "default")'
       - name: Ensure external account loaded
         run: |
           curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "account-3")'
