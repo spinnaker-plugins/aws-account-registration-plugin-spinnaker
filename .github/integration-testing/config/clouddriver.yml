@@ -35,7 +35,17 @@ artifacts:
   templates: []
 aws:
 #  accessKeyId: ABCDEFGHIJK2
-  accounts: []
+  accounts:
+    - accountId: "12345"
+      assumeRole: role/spinnakerManaged
+      lambdaEnabled: true
+      lifecycleHooks: []
+      name: default
+      permissions: {}
+      providerVersion: V1
+      regions:
+        - name: us-west-2
+      requiredGroupMembership: []
   bakeryDefaults:
     baseImages: []
   defaultKeyPairTemplate: '{{name}}-keypair'
@@ -59,26 +69,13 @@ dcos:
   clusters: []
   enabled: false
 dockerRegistry:
-  accounts:
-    - address: https://index.docker.io
-      cacheIntervalSeconds: 60
-      cacheThreads: 1
-      clientTimeoutMillis: 60000
-      email: fake.email@spinnaker.io
-      insecureRegistry: false
-      name: my-ecr-registry
-      paginateSize: 100
-      permissions: {}
-      providerVersion: V1
-      repositories:
-        - nabuskey/public-test
-      requiredGroupMembership: []
-      sortTagsByDate: false
-      trackDigests: false
-  enabled: true
+  accounts: []
+  enabled: false
   primaryAccount: my-ecr-registry
 ecs:
-  accounts: []
+  accounts:
+    - name: default-ecs
+      awsAccount: default
   enabled: true
 google:
   accounts: []

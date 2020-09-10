@@ -49,7 +49,7 @@ jobs:
     name: integration test
     steps:
       - uses: actions/checkout@v2
-      - uses: satackey/action-docker-layer-caching@v0.0.8
+#      - uses: satackey/action-docker-layer-caching@v0.0.8
       - name: test
         run: echo ${{needs.build.outputs.zip_path}}
       - uses: actions/download-artifact@v2
@@ -71,7 +71,7 @@ jobs:
           wget -q https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz
           sudo tar -C /usr/local -xzf go.tar.gz
           echo "::set-env name=PATH::$PATH:/usr/local/go/bin"
-          sudo apt update && sudo apt install netcat curl wget -y
+          sudo apt update && sudp apt install netcat curl wget jq -y
       - name: Run mock server
         working-directory: .github/integration-testing/mock-server
         timeout-minutes: 5
@@ -84,9 +84,30 @@ jobs:
           sleep 3
       - name: Check mock server
         run: |
-          curl localhost:8080/hello
-          sleep 60
-          curl localhost:7002/credentials
+          curl -s localhost:8080/hello | jq -e '.SpinnakerAccounts[] | select(.SpinnakerAccountName == "account-3")'
+          sleep 30
+          curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "defaults")'
+      - name: Ensure external account loaded
+        run: |
+          curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "account-3")'
+      - name: Test removal functionality
+          working-directory: .github/integration-testing/mock-server
+          run: |
+            curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "account-3-ecs")'
+            cp response-remove-ecs.json response.json
+            sleep 15
+            count=$(curl -s localhost:7002/credentials | jq '.[] | select(.name == "account-3-ecs") | [{name}] | length')
+            if [[ -z $count ]]; then echo "account-3-ecs not removed." && exit 1; fi
+            curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "account-3")'
+            cp response-remove.json response.json
+            sleep 15
+            count=$(curl -s localhost:7002/credentials | jq '.[] | select(.name == "account-3") | [{name}] | length')
+            if [[ -z $count ]]; then echo "account-3 not removed." && exit 1; fi
+            curl -s localhost:7002/credentials | jq -e '.[] | select(.name == "default")'
+            cp response-remove-default.json response.json
+            sleep 15
+            count=$(curl -s localhost:7002/credentials | jq '.[] | select(.name == "default") | [{name}] | length')
+            if [[ -z $count ]]; then echo "default not removed." && exit 1; fi
 
 
 
