@@ -34,17 +34,8 @@ artifacts:
     enabled: false
   templates: []
 aws:
-  accessKeyId: ABCDEFGHIJK2
+#  accessKeyId: ABCDEFGHIJK2
   accounts: []
-#    - accountId: "123"
-#      assumeRole: role/spinnakerManaged
-#      lifecycleHooks: []
-#      name: account-1
-#      permissions: {}
-#      providerVersion: V1
-#      regions:
-#        - name: us-west-2
-#      requiredGroupMembership: []
   bakeryDefaults:
     baseImages: []
   defaultKeyPairTemplate: '{{name}}-keypair'
@@ -53,8 +44,7 @@ aws:
   defaults:
     iamRole: BaseIAMRole
   enabled: true
-#  primaryAccount: account-1
-  secretAccessKey: secret
+#  secretAccessKey: secret
 azure:
   accounts: []
   bakeryDefaults:
@@ -89,13 +79,7 @@ dockerRegistry:
   primaryAccount: my-ecr-registry
 ecs:
   accounts: []
-#    - awsAccount: account-1
-#      name: account-1-ecs
-#      permissions: {}
-#      providerVersion: V1
-#      requiredGroupMembership: []
-  enabled: false
-#  primaryAccount: account-1-ecs
+  enabled: true
 google:
   accounts: []
   bakeryDefaults:

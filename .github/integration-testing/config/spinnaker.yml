@@ -1,0 +1,92 @@
+global.spinnaker.timezone: America/Los_Angeles
+services:
+  clouddriver:
+    baseUrl: http://spin-clouddriver.spinnaker:7002
+    enabled: true
+    host: 0.0.0.0
+    port: 7002
+  clouddriverCaching:
+    baseUrl: http://spin-clouddriver-caching.spinnaker:7002
+    enabled: false
+    host: 0.0.0.0
+    port: 7002
+  clouddriverRo:
+    baseUrl: http://spin-clouddriver-ro.spinnaker:7002
+    enabled: false
+    host: 0.0.0.0
+    port: 7002
+  clouddriverRoDeck:
+    baseUrl: http://spin-clouddriver-ro-deck.spinnaker:7002
+    enabled: false
+    host: 0.0.0.0
+    port: 7002
+  clouddriverRw:
+    baseUrl: http://spin-clouddriver-rw.spinnaker:7002
+    enabled: false
+    host: 0.0.0.0
+    port: 7002
+  deck:
+    baseUrl: http://localhost:9000
+    enabled: true
+    host: 0.0.0.0
+    port: 9000
+  echo:
+    baseUrl: http://spin-echo.spinnaker:8089
+    enabled: true
+    host: 0.0.0.0
+    port: 8089
+  echoScheduler:
+    baseUrl: http://spin-echo-scheduler.spinnaker:8089
+    enabled: false
+    host: 0.0.0.0
+    port: 8089
+  echoWorker:
+    baseUrl: http://spin-echo-worker.spinnaker:8089
+    enabled: false
+    host: 0.0.0.0
+    port: 8089
+  fiat:
+    baseUrl: http://spin-fiat.spinnaker:7003
+    enabled: false
+    host: 0.0.0.0
+    port: 7003
+  front50:
+    baseUrl: http://spin-front50.spinnaker:8080
+    enabled: true
+    host: 0.0.0.0
+    port: 8080
+  gate:
+    baseUrl: http://localhost:8084
+    enabled: true
+    host: 0.0.0.0
+    port: 8084
+  igor:
+    baseUrl: http://spin-igor.spinnaker:8088
+    enabled: false
+    host: 0.0.0.0
+    port: 8088
+  kayenta:
+    baseUrl: http://spin-kayenta.spinnaker:8090
+    enabled: false
+    host: 0.0.0.0
+    port: 8090
+  monitoringDaemon:
+    baseUrl: http://spin-monitoring-daemon.spinnaker:8008
+    enabled: false
+    host: 0.0.0.0
+    port: 8008
+  orca:
+    baseUrl: http://spin-orca.spinnaker:8083
+    enabled: true
+    host: 0.0.0.0
+    port: 8083
+  redis:
+    baseUrl: redis://spin-redis.spinnaker:6379
+    enabled: true
+    host: 0.0.0.0
+    port: 6379
+  rosco:
+    baseUrl: http://spin-rosco.spinnaker:8087
+    enabled: true
+    host: 0.0.0.0
+    port: 8087
