@@ -146,8 +146,9 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(nullResponse);
 
-        AccountsStatus status = new AccountsStatus(credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/") {{
+        AccountsStatus status = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/") {{
             setRestTemplate(mockRest);
+            setECSCredentialsConfig(ecsCredentialsConfig);
         }};
         assertFalse(status.getDesiredAccounts());
 
@@ -174,8 +175,8 @@ public class AccountsStatusTest {
                 () -> assertFalse(status.getEcsAccounts().containsKey("test20-ecs"))
         );
 
-        AccountsStatus statusQueryString = new AccountsStatus(credentialsConfig, ecsCredentialsConfig,
-                "http://localhost:8080/hello?env=test");
+        AccountsStatus statusQueryString = new AccountsStatus(credentialsConfig,"http://localhost:8080/hello?env=test");
+        statusQueryString.setECSCredentialsConfig(ecsCredentialsConfig);
         statusQueryString.setRestTemplate(mockRest);
         assertFalse(statusQueryString.getDesiredAccounts());
 
@@ -216,7 +217,8 @@ public class AccountsStatusTest {
             }});
         }};
 
-        AccountsStatus statusAPIGateway = new AccountsStatus(cc, ecsCredentialsConfig, "http://localhost:8080/apigateway?env=test") {{
+        AccountsStatus statusAPIGateway = new AccountsStatus(cc, "http://localhost:8080/apigateway?env=test") {{
+            setECSCredentialsConfig(ecsCredentialsConfig);
             setIamAuth(true);
             setRegion("us-west-2");
             setRestTemplate(mockRest);
@@ -231,7 +233,7 @@ public class AccountsStatusTest {
 
     @Test
     public void TestMarkSynced() {
-        AccountsStatus status = new AccountsStatus(null, null, "http://localhost/") {{
+        AccountsStatus status = new AccountsStatus(null, "http://localhost/") {{
             setLastAttemptedTIme("now");
         }};
         status.markSynced();
@@ -249,7 +251,7 @@ public class AccountsStatusTest {
             setName("test2");
             setAccountId("2");
         }});
-        AccountsStatus status = new AccountsStatus(null, null, "http://localhost/") {{
+        AccountsStatus status = new AccountsStatus(null, "http://localhost/") {{
             setEc2Accounts(map);
         }};
         assertEquals(2, status.getEC2AccountsAsList().size());
@@ -272,7 +274,7 @@ public class AccountsStatusTest {
             setName("test1-ecs");
             setAwsAccount("test-1");
         }});
-        AccountsStatus status = new AccountsStatus(null, null, "http://localhost/") {{
+        AccountsStatus status = new AccountsStatus(null, "http://localhost/") {{
             setEcsAccounts(mapECS);
             setEc2Accounts(map);
         }};
@@ -315,7 +317,8 @@ public class AccountsStatusTest {
             }});
         }};
         RestTemplate mockRest = Mockito.mock(RestTemplate.class);
-        AccountsStatus exceptionStatus = new AccountsStatus(credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/") {{
+        AccountsStatus exceptionStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/") {{
+            setECSCredentialsConfig(ecsCredentialsConfig);
             setRestTemplate(mockRest);
         }};
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
@@ -381,7 +384,8 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(deleteResponse);
 
-        AccountsStatus status = new AccountsStatus(credentialsConfig, ecsCredentialsConfig, "http://localhost:8080/hello/") {{
+        AccountsStatus status = new AccountsStatus(credentialsConfig,"http://localhost:8080/hello/") {{
+            setECSCredentialsConfig(ecsCredentialsConfig);
             setRestTemplate(mockRest);
         }};
 
