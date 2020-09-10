@@ -71,7 +71,7 @@ jobs:
           wget -q https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz
           sudo tar -C /usr/local -xzf go.tar.gz
           echo "::set-env name=PATH::$PATH:/usr/local/go/bin"
-          sudo apt update && sudo apt install netcat curl wget jq -y
+#          sudo apt update && sudo apt install netcat curl wget jq -y
       - name: Run mock server
         working-directory: .github/integration-testing/mock-server
         timeout-minutes: 5

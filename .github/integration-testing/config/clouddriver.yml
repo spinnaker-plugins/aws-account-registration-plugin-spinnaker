@@ -46,6 +46,16 @@ aws:
       regions:
         - name: us-west-2
       requiredGroupMembership: []
+    - accountId: "123456"
+      assumeRole: role/spinnakerManaged
+      lambdaEnabled: true
+      lifecycleHooks: []
+      name: default2
+      permissions: {}
+      providerVersion: V1
+      regions:
+        - name: us-west-2
+      requiredGroupMembership: []
   bakeryDefaults:
     baseImages: []
   defaultKeyPairTemplate: '{{name}}-keypair'
@@ -76,6 +86,8 @@ ecs:
   accounts:
     - name: default-ecs
       awsAccount: default
+    - name: default2-ecs
+      awsAccount: default2
   enabled: true
 google:
   accounts: []
