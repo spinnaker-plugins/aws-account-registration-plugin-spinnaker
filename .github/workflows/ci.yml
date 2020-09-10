@@ -64,7 +64,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
         run: |
-          docker run -d --network=host --mount type=bind,src="$(pwd)"/.github/integration-testing/config,target=/opt/spinnaker/config test:plugin
+          docker run -d --network=host --mount type=bind,src="$(pwd)"/.github/integration-testing/config,target=/opt/spinnaker/config \
+          -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} test:plugin
       - name: Prepare mock server
         run: |
           wget -q https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz
@@ -84,6 +85,7 @@ jobs:
       - name: Check mock server
         run: |
           curl localhost:8080/hello
+          sleep 60
           curl localhost:7002/credentials
 
 
