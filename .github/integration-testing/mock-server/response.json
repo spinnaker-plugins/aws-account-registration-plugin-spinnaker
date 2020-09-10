@@ -9,8 +9,7 @@
       "SpinnakerStatus": "ACTIVE",
       "SpinnakerAssumeRole": "role/spinnakerManaged",
       "SpinnakerProviders": [
-          "ec2",
-          "ecs"
+          "ec2"
       ],
       "SpinnakerId": "spinnaker1",
       "CreatedAt": "1598026448909979587",
