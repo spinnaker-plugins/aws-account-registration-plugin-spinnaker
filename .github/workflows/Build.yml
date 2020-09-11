@@ -53,6 +53,12 @@ jobs:
         with:
           name: bundle
           path: plugins
+      - name: test
+        run: ls -lh plugins
+      #      - name: Build docker image
+#        run: |
+#          docker build --build-arg targetVersion=1.22.0 --build-arg pluginFile=${{needs.build.outputs.zip_path}} \
+#          -f .github/integration-testing/Dockerfile_bake_plugin -t test:plugin .
       - name: Run clouddriver
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
