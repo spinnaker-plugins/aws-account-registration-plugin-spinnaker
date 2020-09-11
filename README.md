@@ -1,4 +1,6 @@
 ## Spinnaker Plugin for Dynamic Account Registration
+![Build](https://github.com/awslabs/aws-account-registration-plugin-spinnaker/workflows/Build/badge.svg)
+
 
 ### Requirements
 1. Must be used with Spinnaker version 1.22 or higher.

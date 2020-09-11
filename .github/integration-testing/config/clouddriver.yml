@@ -1,0 +1,132 @@
+appengine:
+  accounts: []
+  enabled: false
+artifacts:
+  bitbucket:
+    accounts: []
+    enabled: false
+  gcs:
+    accounts: []
+    enabled: false
+  github:
+    accounts: []
+    enabled: false
+  gitlab:
+    accounts: []
+    enabled: false
+  gitrepo:
+    accounts: []
+    enabled: false
+  helm:
+    accounts: []
+    enabled: false
+  http:
+    accounts: []
+    enabled: false
+  maven:
+    accounts: []
+    enabled: false
+  oracle:
+    accounts: []
+    enabled: false
+  s3:
+    accounts: []
+    enabled: false
+  templates: []
+aws:
+#  accessKeyId: ABCDEFGHIJK2
+  accounts:
+    - accountId: "12345"
+      assumeRole: role/spinnakerManaged
+      lambdaEnabled: true
+      lifecycleHooks: []
+      name: default
+      permissions: {}
+      providerVersion: V1
+      regions:
+        - name: us-west-2
+      requiredGroupMembership: []
+    - accountId: "123456"
+      assumeRole: role/spinnakerManaged
+      lambdaEnabled: true
+      lifecycleHooks: []
+      name: default2
+      permissions: {}
+      providerVersion: V1
+      regions:
+        - name: us-west-2
+      requiredGroupMembership: []
+  bakeryDefaults:
+    baseImages: []
+  defaultKeyPairTemplate: '{{name}}-keypair'
+  defaultRegions:
+    - name: us-west-2
+  defaults:
+    iamRole: BaseIAMRole
+  enabled: true
+#  secretAccessKey: secret
+azure:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+    templateFile: azure-linux.json
+  enabled: false
+cloudfoundry:
+  accounts: []
+  enabled: false
+dcos:
+  accounts: []
+  clusters: []
+  enabled: false
+dockerRegistry:
+  accounts: []
+  enabled: false
+  primaryAccount: my-ecr-registry
+ecs:
+  accounts:
+    - name: default-ecs
+      awsAccount: default
+    - name: default2-ecs
+      awsAccount: default2
+  enabled: true
+google:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+    network: default
+    templateFile: gce.json
+    useInternalIp: false
+    zone: us-central1-f
+  enabled: false
+huaweicloud:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+  enabled: false
+kubernetes:
+  accounts: []
+  enabled: false
+oracle:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+    templateFile: oci.json
+  enabled: false
+server:
+  address: ${services.clouddriver.host:localhost}
+  port: ${services.clouddriver.port:7002}
+spectator:
+  applicationName: ${spring.application.name}
+  webEndpoint:
+    enabled: false
+spinnaker:
+  extensibility:
+    plugins: {}
+    plugins-root-path: /opt/clouddriver/plugins
+    repositories: {}
+    strict-plugin-loading: false
+tencentcloud:
+  accounts: []
+  bakeryDefaults:
+    baseImages: []
+  enabled: false

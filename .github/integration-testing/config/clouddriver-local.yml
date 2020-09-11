@@ -1,0 +1,15 @@
+accountProvision:
+  pullFrequencyInMilliSeconds: 3000
+  url: http://localhost:8080/hello
+
+archaius:
+  fixedDelayPollingScheduler:
+    delayMills: 2147483647
+    initialDelayMills: 2147483647
+spinnaker:
+  extensibility:
+    plugins:
+      AWS.AccountRegistration:
+        enabled: true
+  repositories: {}
+  strict-plugin-loading: false

@@ -1,0 +1,5 @@
+
+ARG targetVersion
+FROM gcr.io/spinnaker-marketplace/clouddriver:spinnaker-${targetVersion}
+ARG pluginFile
+COPY ${pluginFile} /opt/clouddriver/plugins/
