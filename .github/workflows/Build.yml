@@ -1,4 +1,4 @@
-name: CI
+name: Build
 
 on:
   pull_request:
@@ -49,23 +49,24 @@ jobs:
     name: integration test
     steps:
       - uses: actions/checkout@v2
-#      - uses: satackey/action-docker-layer-caching@v0.0.8
-      - name: test
-        run: echo ${{needs.build.outputs.zip_path}}
       - uses: actions/download-artifact@v2
         with:
           name: bundle
-      - name: Build docker image
-        run: |
-          docker build --build-arg targetVersion=1.22.0 --build-arg pluginFile=${{needs.build.outputs.zip_path}} \
-          -f .github/integration-testing/Dockerfile_bake_plugin -t test:plugin .
+          path: plugins
+      - name: test
+        run: ls -lh plugins
+      #      - name: Build docker image
+#        run: |
+#          docker build --build-arg targetVersion=1.22.0 --build-arg pluginFile=${{needs.build.outputs.zip_path}} \
+#          -f .github/integration-testing/Dockerfile_bake_plugin -t test:plugin .
       - name: Run clouddriver
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
         run: |
-          docker run -d --network=host --mount type=bind,src="$(pwd)"/.github/integration-testing/config,target=/opt/spinnaker/config \
-          -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} test:plugin
+          docker run --user=root -d --network=host --mount type=bind,src="$(pwd)"/.github/integration-testing/config,target=/opt/spinnaker/config \
+          --mount type=bind,src="$(pwd)"/plugins,target=/opt/clouddriver/plugins -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+          -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} gcr.io/spinnaker-marketplace/clouddriver:spinnaker-1.22.0
       - name: Prepare mock server
         run: |
           wget -q https://golang.org/dl/go1.15.1.linux-amd64.tar.gz -O go.tar.gz

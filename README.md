@@ -1,5 +1,5 @@
 ## Spinnaker Plugin for Dynamic Account Registration
-![example workflow file path](https://github.com/awslabs/aws-account-registration-plugin-spinnaker/workflows/.github/workflows/ci.yml/badge.svg?branch=feature/integration-testing)
+![Build](https://github.com/awslabs/aws-account-registration-plugin-spinnaker/workflows/Build/badge.svg?branch=feature/integration-testing)
 
 
 ### Requirements
