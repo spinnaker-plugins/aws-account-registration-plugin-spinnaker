@@ -118,7 +118,7 @@ public class AccountsStatus {
             log.error("Failed to find most recent timestamp in payload.");
             return false;
         }
-        log.debug("Setting last sync attempt time to {}", mostRecentTime);
+        log.info("Setting last sync attempt time to {}", mostRecentTime);
         this.lastAttemptedTIme = mostRecentTime;
         if (response.convertCredentials()) {
             buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts(),
@@ -216,6 +216,7 @@ public class AccountsStatus {
                 log.info("Received 403 from API Gateway. Retrying..");
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
+                    log.error("Failed to generate resources required for AWS Signature V4 to authenticate with API Gateway.");
                     return null;
                 }
                 return callApiGateway(url);
