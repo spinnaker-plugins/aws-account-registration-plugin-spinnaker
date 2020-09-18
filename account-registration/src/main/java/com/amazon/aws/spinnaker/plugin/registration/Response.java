@@ -99,6 +99,7 @@ public class Response {
             }
             String accountName = account.getName();
             if (ec2Accounts.get(accountName) != null) {
+                log.info("Found a possible duplicate account, {}. Will not process this.", accountName);
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
@@ -134,8 +135,8 @@ public class Response {
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
         this.accountsToCheck = accountsToCheck;
-        if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty()) {
-            log.debug("No accounts to process.");
+        if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty() && accountsToCheck.isEmpty()) {
+            log.info("Processed remote accounts resulted in no valid accounts to process.");
             return false;
         }
         return true;
