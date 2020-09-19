@@ -89,7 +89,7 @@ class AmazonPollingSynchronizer {
             log.debug("Nothing to do.");
             return;
         }
-        log.info("{} EC2 accounts will be updated in credential repository.", accountsStatus.getEC2AccountsAsList().size());
+        log.info("Total of {} EC2 accounts will be in credential repository.", accountsStatus.getEC2AccountsAsList().size());
         // Sync Amazon credentials in repo
         // CANNOT use defaultAmazonAccountsSynchronizer. Otherwise it will remove ECS accounts everytime there is a change
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
@@ -103,7 +103,7 @@ class AmazonPollingSynchronizer {
                 catsModule
         );
         // Sync ECS credentials in repo
-        log.info("{} ECS accounts will be updated in credential repository", accountsStatus.getECSAccountsAsList().size());
+        log.info("Total of {} ECS accounts will be in credential repository", accountsStatus.getECSAccountsAsList().size());
         // EcsAccountMapper is normally initialized and never refreshed. Need to refresh here.
         // Cannot autowire EcsAccountMapper for some reason. It returns every field wth null values.
         // Doing it this way is a problem.
