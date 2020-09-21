@@ -140,11 +140,10 @@ public class AccountsStatus {
             log.error("Current configured accounts is null. Very likely this is a configuration issue.");
             return;
         }
-        log.info("Checking if {} accounts need to be updated in Credential Repository", ec2Accounts.keySet().size());
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
             for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
                 if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
-                    log.info("Existing EC2 account, {}, will be updated with updated account information.", sourceAccount.getName());
+                    log.info("Account info for existing EC2 account \"{}\" will be updated.", sourceAccount.getName());
                     currentAccount = null;
                     break;
                 }
@@ -156,7 +155,7 @@ public class AccountsStatus {
         for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
             for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts.values()) {
                 if (currentECSAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentECSAccount.getAwsAccount())) {
-                    log.info("Existing ECS account, {}, will be updated with updated account information.", sourceAccount.getName());
+                    log.info("Account info for existing ECS account \"{}\" will be updated.", sourceAccount.getName());
                     currentECSAccount = null;
                     break;
                 }
@@ -175,7 +174,7 @@ public class AccountsStatus {
             ecsAccounts.remove(ecsAccountName);
         }
         log.debug("Accounts to be updated in CredentialsConfig: {}", ec2Accounts.keySet());
-        log.debug("ECS accounts to be updated in CredentialsConfig: {}", ecsAccounts.keySet());
+        log.debug("EC2 accounts to be updated in CredentialsConfig: {}", ec2Accounts.keySet());
         this.setEc2Accounts(ec2Accounts);
         this.setEcsAccounts(ecsAccounts);
     }
