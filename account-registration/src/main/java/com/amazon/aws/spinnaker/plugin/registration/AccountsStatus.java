@@ -85,6 +85,11 @@ public class AccountsStatus {
     }
 
     public boolean getDesiredAccounts() {
+        if (lastSyncTime != null) {
+            log.info("Last time synced with remote host is: {}", lastSyncTime);
+        } else {
+            log.info("Last sync time is not set. Will perform a full sync.");
+        }
         Response response = getResourceFromRemoteHost(remoteHostUrl);
         if (response == null) {
             return false;
@@ -105,20 +110,25 @@ public class AccountsStatus {
             response.setAccounts(accounts);
         }
         if (response.getAccounts().isEmpty()) {
+            log.info("Returned response contained empty accounts.");
             return false;
         }
         log.info("Finished gathering accounts from remote host. Processing {} accounts.", response.getAccounts().size());
         log.debug(response.getAccounts().toString());
         String mostRecentTime = findMostRecentTime(response);
         if (mostRecentTime == null) {
+            log.error("Failed to find most recent timestamp in payload.");
             return false;
         }
+        log.info("Setting last sync attempt time to {}", mostRecentTime);
         this.lastAttemptedTIme = mostRecentTime;
+        log.info("Converting {} accounts to Spinnaker account types.", response.getAccounts().size());
         if (response.convertCredentials()) {
             buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts(),
                     response.getAccountsToCheck());
             return true;
         }
+        log.info("No valid accounts to process.");
         return false;
     }
 
@@ -126,14 +136,14 @@ public class AccountsStatus {
                                            HashMap<String, ECSCredentialsConfig.Account> ecsAccounts,
                                            List<String> deletedAccounts, List<String> accountsToCheck) {
         // Always use external source as credentials repo's correct state.
-        // TODO: need a better way to check for account existence in current credentials repo.
-
         if (credentialsConfig.getAccounts() == null) {
+            log.error("Current configured accounts is null. Very likely this is a configuration issue.");
             return;
         }
         for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
             for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
                 if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
+                    log.info("Account info for existing EC2 account \"{}\" will be updated.", sourceAccount.getName());
                     currentAccount = null;
                     break;
                 }
@@ -145,6 +155,7 @@ public class AccountsStatus {
         for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
             for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts.values()) {
                 if (currentECSAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentECSAccount.getAwsAccount())) {
+                    log.info("Account info for existing ECS account \"{}\" will be updated.", sourceAccount.getName());
                     currentECSAccount = null;
                     break;
                 }
@@ -159,11 +170,11 @@ public class AccountsStatus {
         }
         for (String ecsAccountsToRemove : accountsToCheck) {
             String ecsAccountName = ecsAccountsToRemove + "-ecs";
-            log.debug("ECS account, {}, will be removed.", ecsAccountName);
+            log.info("ECS account, {}, will be removed.", ecsAccountName);
             ecsAccounts.remove(ecsAccountName);
         }
-        log.debug("Accounts to be updated: {}", ec2Accounts);
-        log.debug("ECS accounts to be updated: {}", ecsAccounts);
+        log.debug("Accounts to be updated in CredentialsConfig: {}", ec2Accounts.keySet());
+        log.debug("EC2 accounts to be updated in CredentialsConfig: {}", ec2Accounts.keySet());
         this.setEc2Accounts(ec2Accounts);
         this.setEcsAccounts(ecsAccounts);
     }
@@ -181,10 +192,11 @@ public class AccountsStatus {
             log.error("Response from remote host was invalid.");
             return null;
         }
-        if (response.accounts == null || response.accounts.isEmpty()) {
-            log.debug("No accounts returned from remote host.");
+        if (response.getAccounts() == null || response.getAccounts().isEmpty()) {
+            log.info("No accounts returned from remote host.");
             return null;
         }
+        log.info("Received a valid response from remote host.");
         return response;
     }
 
@@ -196,6 +208,7 @@ public class AccountsStatus {
         if (this.headerGenerator == null) {
             makeHeaderGenerator(url);
             if (this.headerGenerator == null) {
+                log.error("Failed to generate resources required for AWS Signature V4 to authenticate with API Gateway.");
                 return null;
             }
         }
@@ -207,6 +220,7 @@ public class AccountsStatus {
                 log.info("Received 403 from API Gateway. Retrying..");
                 makeHeaderGenerator(url);
                 if (this.headerGenerator == null) {
+                    log.error("Failed to generate resources required for AWS Signature V4 to authenticate with API Gateway.");
                     return null;
                 }
                 return callApiGateway(url);
@@ -223,7 +237,7 @@ public class AccountsStatus {
                     new BasicAWSCredentials(credentialsConfig.getAccessKeyId(), credentialsConfig.getSecretAccessKey())
             );
         } else {
-            log.debug("Attempting to obtain AWS credentials from default chain.");
+            log.info("Attempting to obtain AWS credentials from default chain.");
             awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
         this.headerGenerator = new HeaderGenerator(
@@ -246,16 +260,19 @@ public class AccountsStatus {
             queryStrings.put(entry.getKey(), entry.getValue());
         }
         if (lastSyncTime != null) {
+            log.debug("Setting UpdatedAt.gt query string to {}", lastSyncTime);
             queryStrings.put("UpdatedAt.gt", new ArrayList<String>(Collections.singletonList(lastSyncTime)));
             builder.queryParam("UpdatedAt.gt", lastSyncTime);
         }
         TreeMap<String, String> generatedHeaders = headerGenerator.generateHeaders(queryStrings);
         HttpHeaders headers = new HttpHeaders();
         for (Map.Entry<String, String> entry : generatedHeaders.entrySet()) {
+            log.trace("Generated Auth header: {}", entry.getValue());
             headers.add(entry.getKey(), entry.getValue());
         }
 
         HttpEntity entity = new HttpEntity<>(headers);
+        log.debug("calling API Gateway: {}", builder.toUriString());
         HttpEntity<Response> response = restTemplate.exchange(
                 builder.toUriString(),
                 HttpMethod.GET,

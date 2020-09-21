@@ -188,15 +188,22 @@ public class AccountsStatusTest {
         CredentialsConfig cc = new CredentialsConfig() {{
             setAccessKeyId("access");
             setSecretAccessKey("secret");
+            setAccounts(new ArrayList<>(Arrays.asList(
+                    new CredentialsConfig.Account() {{
+                        setName("test1");
+                        setAccountId("1");
+                        setAssumeRole("role/role1");
+                        setRegions(new ArrayList(Arrays.asList(new CredentialsConfig.Region() {{
+                            setName("us-west-2");
+                        }})));
+                        setLambdaEnabled(false);
+                        setEnabled(true);
+                    }})));
         }};
         ECSCredentialsConfig ecsCredentialsConfig = new ECSCredentialsConfig() {{
             setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
-                setName("test9-ecs");
-                setAwsAccount("test9");
-            }})));
-            setAccounts(new ArrayList<>(Arrays.asList(new ECSCredentialsConfig.Account() {{
-                setName("test20-ecs");
-                setAwsAccount("test20");
+                setName("test1-ecs");
+                setAwsAccount("test1");
             }})));
         }};
         List<Account> correctAccounts = new ArrayList<Account>(Arrays.asList(
@@ -320,6 +327,7 @@ public class AccountsStatusTest {
         AccountsStatus exceptionStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/") {{
             setECSCredentialsConfig(ecsCredentialsConfig);
             setRestTemplate(mockRest);
+            setLastSyncTime("someTime");
         }};
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(exceptionResponse);

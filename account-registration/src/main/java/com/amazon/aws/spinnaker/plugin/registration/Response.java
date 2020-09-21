@@ -93,16 +93,19 @@ public class Response {
         List<String> deletedAccounts = new ArrayList<>();
         List<String> accountsToCheck = new ArrayList<>();
         for (Account account : accounts) {
-            log.trace(account.toString());
+            log.info("Converting {} to Spinnaker account type.", account.getName());
+            log.debug("Converting {}", account.toString());
             if (!shouldConvert(account)) {
                 continue;
             }
             String accountName = account.getName();
             if (ec2Accounts.get(accountName) != null) {
+                log.info("Found a possible duplicate account, {}. Will not process this.", accountName);
                 continue;
             }
             if ("SUSPENDED".equals(account.getStatus()) || account.getProviders() == null || account.getProviders().isEmpty()) {
-                log.debug("Account, {}, will be removed: {}", accountName, account);
+                log.info("Account, {}, will be removed because it's suspended or no valid provider list was provided: {}",
+                        accountName, account);
                 deletedAccounts.add(accountName);
                 continue;
             }
@@ -110,32 +113,39 @@ public class Response {
             ec2Account.setLambdaEnabled(false);
             Set<String> cleanedProviders = generateCleanedSet(account.getProviders());
             for (String provider : cleanedProviders) {
-                if ("lambda".equals(provider)) {
-                    log.debug("Enabling Lambda for {}", accountName);
-                    ec2Account.setLambdaEnabled(true);
-                    continue;
-                }
-                if ("ecs".equals(provider)) {
-                    log.debug("Enabling ECS for {}", accountName);
-                    ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
-                    ecsAccounts.put(ecsAccount.getName(), ecsAccount);
+                switch(provider) {
+                    case "ec2":
+                        log.trace("Nothing to do for EC2.");
+                        continue;
+                    case "lambda":
+                        log.info("Enabling Lambda support for {}", accountName);
+                        ec2Account.setLambdaEnabled(true);
+                        continue;
+                    case "ecs":
+                        log.info("Enabling ECS account for {}", accountName);
+                        ECSCredentialsConfig.Account ecsAccount = makeECSAccount(account);
+                        ecsAccounts.put(ecsAccount.getName(), ecsAccount);
+                        continue;
+                    default:
+                        log.info("Unsupported provider {}, encountered. Ignoring this provider.", provider);
                 }
             }
             if (!cleanedProviders.contains("ecs")) {
                 accountsToCheck.add(accountName);
             }
+            log.debug("Finished converting {}", ec2Account.getName());
             ec2Accounts.put(ec2Account.getName(), ec2Account);
         }
-        log.debug("Converted AWS accounts {}", ec2Accounts);
-        log.debug("Converted ECS accounts {}", ecsAccounts);
+        log.debug("Converted AWS accounts {}", ec2Accounts.keySet());
+        log.debug("Converted ECS accounts {}", ecsAccounts.keySet());
         log.debug("Accounts to be deleted {}", deletedAccounts);
         log.debug("Accounts to ensure providers are disabled: {}", accountsToCheck);
         this.deletedAccounts = deletedAccounts;
         this.ec2Accounts = ec2Accounts;
         this.ecsAccounts = ecsAccounts;
         this.accountsToCheck = accountsToCheck;
-        if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty()) {
-            log.debug("No accounts to process.");
+        if (ec2Accounts.isEmpty() && ecsAccounts.isEmpty() && deletedAccounts.isEmpty() && accountsToCheck.isEmpty()) {
+            log.info("Processed remote accounts resulted in no valid accounts to process.");
             return false;
         }
         return true;

@@ -35,7 +35,7 @@ public class ResponseTest {
             setAssumeRole("role/role1");
             setStatus("ACTIVE");
             setRegions(new ArrayList(Arrays.asList("us-WEST-2")));
-            setProviders(new ArrayList(Arrays.asList("ECS", "lAmbda", "ec2")));
+            setProviders(new ArrayList(Arrays.asList("ECS", "lAmbda", "ec2", "invalidProvider")));
         }});
         receivedAccounts.put("test2", new Account() {{
             setName("test2");
