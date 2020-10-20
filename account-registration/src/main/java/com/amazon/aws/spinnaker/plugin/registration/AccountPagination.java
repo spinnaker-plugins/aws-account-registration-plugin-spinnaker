@@ -23,5 +23,5 @@ import lombok.Data;
 @Data
 public class AccountPagination {
     @JsonProperty("NextUrl")
-    private String nextUrl;
+    private String nextUrl = "";
 }

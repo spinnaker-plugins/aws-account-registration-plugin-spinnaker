@@ -83,7 +83,7 @@ class AmazonPollingSynchronizer {
         sync();
     }
 
-    void sync() throws Throwable {
+    synchronized void sync() throws Throwable {
         log.debug("Checking remote host for account updates.");
         if (!accountsStatus.getDesiredAccounts()) {
             log.debug("Nothing to do.");
