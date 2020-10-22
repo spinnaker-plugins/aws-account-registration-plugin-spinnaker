@@ -14,13 +14,13 @@ apply plugin: 'groovy'
 apply plugin: 'java'
 //apply plugin: 'kotlin-kapt'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
   mavenCentral()
   jcenter()
-  maven { url "http://dl.bintray.com/spinnaker/spinnaker/" }
+  maven { url "http://dl.bintray.com/spinnaker-releases/jars/" }
 }
 
 sourceSets.main.java.srcDirs = []

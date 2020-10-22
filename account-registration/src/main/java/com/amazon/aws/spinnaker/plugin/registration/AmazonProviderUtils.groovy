@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.spectator.api.Registry
 import com.netflix.spinnaker.cats.agent.Agent
 import com.netflix.spinnaker.cats.agent.AgentProvider
-import com.netflix.spinnaker.cats.module.CatsModule
 import com.netflix.spinnaker.clouddriver.aws.AmazonCloudProvider
 import com.netflix.spinnaker.clouddriver.aws.edda.EddaApiFactory
 import com.netflix.spinnaker.clouddriver.aws.provider.AwsInfrastructureProvider
@@ -31,7 +30,6 @@ import com.netflix.spinnaker.clouddriver.aws.provider.view.AmazonS3DataProvider
 import com.netflix.spinnaker.clouddriver.aws.security.*
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader
-import com.netflix.spinnaker.clouddriver.ecs.security.NetflixECSCredentials
 import com.netflix.spinnaker.clouddriver.lambda.provider.agent.IamRoleCachingAgent
 import com.netflix.spinnaker.clouddriver.lambda.provider.agent.LambdaCachingAgent
 import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository
@@ -118,11 +116,7 @@ class AmazonProviderUtils {
                 )
             }
         }
-        // Actually schedule agents.
-        if (awsProvider.agentScheduler) {
-            ProviderUtils.rescheduleAgents(awsProvider, newlyAddedAgents)
-        }
-        awsProvider.agents.addAll(newlyAddedAgents)
+        awsProvider.addAgents(newlyAddedAgents)
         awsProvider.synchronizeHealthAgents()
         return publicRegions
     }
@@ -183,13 +177,7 @@ class AmazonProviderUtils {
                     newlyAddedAgents << new AmazonSubnetCachingAgent(amazonClientProvider, credentials, region.name, amazonObjectMapper)
                     newlyAddedAgents << new AmazonVpcCachingAgent(amazonClientProvider, credentials, region.name, amazonObjectMapper)
 
-                    // If there is an agent scheduler, then this provider has been through the AgentController in the past.
-                    // In that case, we need to do the scheduling here (because accounts have been added to a running system).
-                    if (awsInfrastructureProvider.agentScheduler) {
-                        ProviderUtils.rescheduleAgents(awsInfrastructureProvider, newlyAddedAgents)
-                    }
-
-                    awsInfrastructureProvider.agents.addAll(newlyAddedAgents)
+                    awsInfrastructureProvider.addAgents(newlyAddedAgents)
                 }
             }
         }
@@ -203,7 +191,9 @@ class AmazonProviderUtils {
             CredentialsConfig credentialsConfig,
             AccountCredentialsRepository accountCredentialsRepository,
             DefaultAccountConfigurationProperties defaultAccountConfigurationProperties,
-            CatsModule catsModule) {
+            AwsProvider awsProvider,
+            AwsInfrastructureProvider awsInfrastructureProvider
+            ) {
         if (!credentialsConfig.accounts && !credentialsConfig.defaultAssumeRole) {
             def defaultEnvironment = defaultAccountConfigurationProperties.environment ?: defaultAccountConfigurationProperties.env
             def defaultAccountType = defaultAccountConfigurationProperties.accountType ?: defaultAccountConfigurationProperties.env
@@ -224,6 +214,7 @@ class AmazonProviderUtils {
             accountCredentialsRepository.save(account.name, account)
         }
 
-        ProviderUtils.unscheduleAndDeregisterAgents(namesOfDeletedAccounts, catsModule)
+        awsInfrastructureProvider.removeAgentsForAccounts(namesOfDeletedAccounts)
+        awsProvider.removeAgentsForAccounts(namesOfDeletedAccounts)
     }
 }
