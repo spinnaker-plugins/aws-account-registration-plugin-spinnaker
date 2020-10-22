@@ -32,6 +32,8 @@ import com.netflix.spinnaker.clouddriver.aws.security.*
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader
 import com.netflix.spinnaker.clouddriver.ecs.security.NetflixECSCredentials
+import com.netflix.spinnaker.clouddriver.lambda.provider.agent.IamRoleCachingAgent
+import com.netflix.spinnaker.clouddriver.lambda.provider.agent.LambdaCachingAgent
 import com.netflix.spinnaker.clouddriver.security.AccountCredentialsRepository
 import com.netflix.spinnaker.clouddriver.security.ProviderUtils
 import com.netflix.spinnaker.kork.dynamicconfig.DynamicConfigService
@@ -43,7 +45,7 @@ import java.util.concurrent.ExecutorService
 import static com.amazonaws.regions.Regions.*
 
 class AmazonProviderUtils {
-    static void synchronizeAwsProvider(AwsProvider awsProvider,
+    static Set<String> synchronizeAwsProvider(AwsProvider awsProvider,
                                        AmazonCloudProvider amazonCloudProvider,
                                        AmazonClientProvider amazonClientProvider,
                                        AmazonS3DataProvider amazonS3DataProvider,
@@ -55,17 +57,14 @@ class AmazonProviderUtils {
                                        Optional<ExecutorService> reservationReportPool,
                                        Collection<AgentProvider> agentProviders,
                                        EddaTimeoutConfig eddaTimeoutConfig,
-                                       DynamicConfigService dynamicConfigService) {
+                                       DynamicConfigService dynamicConfigService,
+                                       Set<String> publicRegions
+    ) {
         def scheduledAccounts = ProviderUtils.getScheduledAccounts(awsProvider)
         Set<NetflixAmazonCredentials> allAccounts = ProviderUtils.buildThreadSafeSetOfAccounts(accountCredentialsRepository, NetflixAmazonCredentials, AmazonCloudProvider.ID)
 
         List<Agent> newlyAddedAgents = []
 
-        //only index public images once per region
-        Set<String> publicRegions = []
-
-        //sort the accounts in case of a reconfigure, we are more likely to re-index the public images in the same caching agent
-        //TODO(cfieber)-rework this is after rework of AWS Image/NamedImage keys
         allAccounts.sort { it.name }.each { NetflixAmazonCredentials credentials ->
             for (AmazonCredentials.AWSRegion region : credentials.regions) {
                 if (!scheduledAccounts.contains(credentials.name)) {
@@ -97,24 +96,27 @@ class AmazonProviderUtils {
                     if (dynamicConfigService.isEnabled("aws.features.launch-templates", false)) {
                         newlyAddedAgents << new AmazonLaunchTemplateCachingAgent(amazonClientProvider, credentials, region.name, objectMapper, registry)
                     }
+                    if (credentials.getLambdaEnabled()) {
+                        newlyAddedAgents << new LambdaCachingAgent(objectMapper, amazonClientProvider, credentials, region.getName())
+                        newlyAddedAgents << new IamRoleCachingAgent(objectMapper, credentials, amazonClientProvider)
+                    }
                 }
             }
         }
 
         // If there is an agent scheduler, then this provider has been through the AgentController in the past.
         if (reservationReportPool.isPresent()) {
+            def reservationReportCachingAgent = awsProvider.agents.find { agent ->
+                agent instanceof ReservationReportCachingAgent
+            }
             if (awsProvider.agentScheduler) {
                 synchronizeReservationReportCachingAgentAccounts(awsProvider, allAccounts)
-            } else {
+            } else if (!reservationReportCachingAgent) {
                 // This caching agent runs across all accounts in one iteration (to maintain consistency).
                 newlyAddedAgents << new ReservationReportCachingAgent(
                         registry, amazonClientProvider, amazonS3DataProvider, allAccounts, objectMapper, reservationReportPool.get(), ctx
                 )
             }
-        }
-
-        agentProviders.findAll { it.supports(AwsProvider.PROVIDER_NAME) }.each {
-            newlyAddedAgents.addAll(it.agents())
         }
         // Actually schedule agents.
         if (awsProvider.agentScheduler) {
@@ -122,6 +124,7 @@ class AmazonProviderUtils {
         }
         awsProvider.agents.addAll(newlyAddedAgents)
         awsProvider.synchronizeHealthAgents()
+        return publicRegions
     }
 
     static void synchronizeReservationReportCachingAgentAccounts(AwsProvider awsProvider,
@@ -222,36 +225,5 @@ class AmazonProviderUtils {
         }
 
         ProviderUtils.unscheduleAndDeregisterAgents(namesOfDeletedAccounts, catsModule)
-
-        accountCredentialsRepository.all.findAll {
-            it instanceof NetflixAmazonCredentials
-        } as List<NetflixAmazonCredentials>
-    }
-
-    // from com/netflix/spinnaker/clouddriver/aws/security/DefaultAmazonAccountsSynchronizer.groovy
-    // Modified to not remove ECS account.
-    static List calculateAccountDeltas(def accountCredentialsRepository, def credentialsType, def desiredAccounts) {
-        def oldNames = accountCredentialsRepository.all.findAll {
-            credentialsType.isInstance(it) && !NetflixECSCredentials.isInstance(it)
-        }.collect {
-            it.name
-        }
-
-        def newNames = desiredAccounts.collect {
-            it.name
-        }
-
-        def accountNamesToDelete = oldNames - newNames
-        def accountNamesToAdd = newNames - oldNames
-
-        accountNamesToDelete.each { accountName ->
-            accountCredentialsRepository.delete(accountName)
-        }
-
-        def accountsToAdd = desiredAccounts.findAll { account ->
-            accountNamesToAdd.contains(account.name)
-        }
-
-        return [accountsToAdd, accountNamesToDelete]
     }
 }

@@ -54,6 +54,10 @@ accountProvision:
   syncAgentFrequencyInMilliSeconds: 10000 # How often agent scheduler should run.
   iamAuth: false # Enable IAM authentication for API Gateway.
   iamAuthRegion: 'us-west-2' # Specify which region API Gateway is deployed. Required if `iamAuth` is enabled.
+  connectionTimeout: 2000 # How long to wait before initial connection timeouts
+  readTimeout: 6000 # How long to wait for remote server to return results.
+  maxBackoffTime: 3600000 # How long, in milli seconds, maximum backoff time should be.
+  
 ```
 
 

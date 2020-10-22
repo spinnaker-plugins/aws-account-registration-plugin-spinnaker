@@ -32,7 +32,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 public class AmazonAWSCachingAgentScheduler {
@@ -49,6 +51,7 @@ public class AmazonAWSCachingAgentScheduler {
     private final Optional<ExecutorService> reservationReportPool;
     private final Collection<AgentProvider> agentProviders;
     private final DynamicConfigService dynamicConfigService;
+    private final Set<String> publicRegions = new HashSet<>();
 
     @Autowired
     private AmazonAWSCachingAgentScheduler(LazyLoadCredentialsRepository lazyLoadCredentialsRepository,
@@ -76,8 +79,10 @@ public class AmazonAWSCachingAgentScheduler {
 
     @Scheduled(fixedDelayString = "${accountProvision.syncAgentFrequencyInMilliSeconds:10000}")
     public void synchronizeAwsProvider() {
-        AmazonProviderUtils.synchronizeAwsProvider(awsProvider, amazonCloudProvider, amazonClientProvider,
+        Set<String> regions =  AmazonProviderUtils.synchronizeAwsProvider(awsProvider, amazonCloudProvider, amazonClientProvider,
                 amazonS3DataProvider, lazyLoadCredentialsRepository, objectMapper, eddaApiFactory, ctx,
-                registry, reservationReportPool, agentProviders, eddaTimeoutConfig, dynamicConfigService);
+                registry, reservationReportPool, agentProviders, eddaTimeoutConfig, dynamicConfigService,
+                publicRegions);
+        publicRegions.addAll(regions);
     }
 }

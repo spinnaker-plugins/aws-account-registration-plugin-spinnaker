@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -146,11 +147,15 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(nullResponse);
 
-        AccountsStatus status = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/") {{
+        AccountsStatus status = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/", 0L, 0L) {{
             setRestTemplate(mockRest);
             setECSCredentialsConfig(ecsCredentialsConfig);
         }};
-        assertFalse(status.getDesiredAccounts());
+        assertAll("No account should be returned",
+                () -> assertFalse(status.getDesiredAccounts()),
+                () -> assertEquals(status.getRetryCount().get(), 0),
+                () -> assertNull(status.getNextTry())
+        );
 
         Mockito.when(mockRest.getForObject(Mockito.eq("http://localhost:8080/hello/"), Mockito.eq(Response.class)))
                 .thenReturn(response);
@@ -175,7 +180,7 @@ public class AccountsStatusTest {
                 () -> assertFalse(status.getEcsAccounts().containsKey("test20-ecs"))
         );
 
-        AccountsStatus statusQueryString = new AccountsStatus(credentialsConfig,"http://localhost:8080/hello?env=test");
+        AccountsStatus statusQueryString = new AccountsStatus(credentialsConfig,"http://localhost:8080/hello?env=test", 0L, 0L);
         statusQueryString.setECSCredentialsConfig(ecsCredentialsConfig);
         statusQueryString.setRestTemplate(mockRest);
         assertFalse(statusQueryString.getDesiredAccounts());
@@ -224,7 +229,7 @@ public class AccountsStatusTest {
             }});
         }};
 
-        AccountsStatus statusAPIGateway = new AccountsStatus(cc, "http://localhost:8080/apigateway?env=test") {{
+        AccountsStatus statusAPIGateway = new AccountsStatus(cc, "http://localhost:8080/apigateway?env=test", 0L, 0L) {{
             setECSCredentialsConfig(ecsCredentialsConfig);
             setIamAuth(true);
             setRegion("us-west-2");
@@ -240,7 +245,7 @@ public class AccountsStatusTest {
 
     @Test
     public void TestMarkSynced() {
-        AccountsStatus status = new AccountsStatus(null, "http://localhost/") {{
+        AccountsStatus status = new AccountsStatus(null, "http://localhost/", 0L, 0L) {{
             setLastAttemptedTIme("now");
         }};
         status.markSynced();
@@ -258,7 +263,7 @@ public class AccountsStatusTest {
             setName("test2");
             setAccountId("2");
         }});
-        AccountsStatus status = new AccountsStatus(null, "http://localhost/") {{
+        AccountsStatus status = new AccountsStatus(null, "http://localhost/", 0L, 0L) {{
             setEc2Accounts(map);
         }};
         assertEquals(2, status.getEC2AccountsAsList().size());
@@ -281,7 +286,7 @@ public class AccountsStatusTest {
             setName("test1-ecs");
             setAwsAccount("test-1");
         }});
-        AccountsStatus status = new AccountsStatus(null, "http://localhost/") {{
+        AccountsStatus status = new AccountsStatus(null, "http://localhost/", 0L, 0L) {{
             setEcsAccounts(mapECS);
             setEc2Accounts(map);
         }};
@@ -324,7 +329,7 @@ public class AccountsStatusTest {
             }});
         }};
         RestTemplate mockRest = Mockito.mock(RestTemplate.class);
-        AccountsStatus exceptionStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/") {{
+        AccountsStatus exceptionStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/", 0L, 0L) {{
             setECSCredentialsConfig(ecsCredentialsConfig);
             setRestTemplate(mockRest);
             setLastSyncTime("someTime");
@@ -392,7 +397,7 @@ public class AccountsStatusTest {
         Mockito.when(mockRest.getForObject(Mockito.anyString(), Mockito.eq(Response.class)))
                 .thenReturn(deleteResponse);
 
-        AccountsStatus status = new AccountsStatus(credentialsConfig,"http://localhost:8080/hello/") {{
+        AccountsStatus status = new AccountsStatus(credentialsConfig,"http://localhost:8080/hello/",0L,0L) {{
             setECSCredentialsConfig(ecsCredentialsConfig);
             setRestTemplate(mockRest);
         }};

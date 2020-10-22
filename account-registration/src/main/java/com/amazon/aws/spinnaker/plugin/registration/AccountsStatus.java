@@ -37,11 +37,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Data
@@ -56,6 +58,10 @@ public class AccountsStatus {
     private boolean iamAuth;
     @Value("${accountProvision.iamAuthRegion:us-west-2}")
     private String region;
+    @Value("${accountProvision.maxBackoffTime:3600000}")
+    private long maxBackoffTime;
+    private AtomicInteger retryCount = new AtomicInteger(0);
+    private Instant nextTry;
     private RestTemplate restTemplate;
     private final CredentialsConfig credentialsConfig;
     private ECSCredentialsConfig ecsCredentialsConfig;
@@ -64,11 +70,17 @@ public class AccountsStatus {
     @Autowired
     AccountsStatus(
             CredentialsConfig credentialsConfig,
-            @Value("${accountProvision.url:http://localhost:8080}") String url
+            @Value("${accountProvision.url:http://localhost:8080}") String url,
+            @Value("${accountProvision.connectionTimeout:2000}") Long connectionTimeout,
+            @Value("${accountProvision.readTimeout:6000}") Long readTimeout
     ) {
         this.credentialsConfig = credentialsConfig;
         this.remoteHostUrl = url;
-        this.restTemplate = new RestTemplateBuilder().interceptors(new PlusEncoderInterceptor()).build();
+        this.restTemplate = new RestTemplateBuilder()
+                .interceptors(new PlusEncoderInterceptor())
+                .setConnectTimeout(Duration.ofMillis(connectionTimeout))
+                .setReadTimeout(Duration.ofMillis(connectionTimeout))
+                .build();
     }
 
     @Autowired(required = false)
@@ -85,17 +97,29 @@ public class AccountsStatus {
     }
 
     public boolean getDesiredAccounts() {
+        if (nextTry != null && Instant.now().isBefore(nextTry)) {
+            log.debug("In backoff time. Will not attempt to retrieve accounts.");
+            return false;
+        }
         if (lastSyncTime != null) {
             log.info("Last time synced with remote host is: {}", lastSyncTime);
         } else {
             log.info("Last sync time is not set. Will perform a full sync.");
         }
-        Response response = getResourceFromRemoteHost(remoteHostUrl);
-        if (response == null) {
+        Response response = null;
+        try {
+            response = getResourceFromRemoteHost(remoteHostUrl);
+        } catch (Exception e) {
+            log.error("Could not get account information from remote host.", e);
+            setBackoffTime();
             return false;
         }
-        String nextUrl = response.getPagination().getNextUrl();
-        if (!"".equals(nextUrl)) {
+        if (response == null) {
+            setBackoffTime();
+            return false;
+        }
+        if (response.getPagination() != null && !"".equals(response.getPagination().getNextUrl())) {
+            String nextUrl = response.getPagination().getNextUrl();
             List<Account> accounts = response.getAccounts();
             while (nextUrl != null && !"".equals(nextUrl)) {
                 log.info("Calling next URL, {}", nextUrl);
@@ -194,13 +218,16 @@ public class AccountsStatus {
         }
         if (response.getAccounts() == null || response.getAccounts().isEmpty()) {
             log.info("No accounts returned from remote host.");
-            return null;
+            response.setAccounts(Collections.emptyList());
+            return response;
         }
         log.info("Received a valid response from remote host.");
         return response;
     }
 
     public void markSynced() {
+        this.retryCount.set(0);
+        this.nextTry = null;
         this.lastSyncTime = this.lastAttemptedTIme;
     }
 
@@ -212,21 +239,7 @@ public class AccountsStatus {
                 return null;
             }
         }
-        try {
-            return callApiGateway(url);
-        } catch (HttpClientErrorException e) {
-            if (HttpStatus.FORBIDDEN == e.getStatusCode()) {
-                log.error(e.getMessage());
-                log.info("Received 403 from API Gateway. Retrying..");
-                makeHeaderGenerator(url);
-                if (this.headerGenerator == null) {
-                    log.error("Failed to generate resources required for AWS Signature V4 to authenticate with API Gateway.");
-                    return null;
-                }
-                return callApiGateway(url);
-            }
-            throw e;
-        }
+        return callApiGateway(url);
     }
 
     private void makeHeaderGenerator(String url) {
@@ -254,6 +267,30 @@ public class AccountsStatus {
     }
 
     private Response callApiGateway(String url) {
+        int retry = 0;
+        while (retry <= 1) {
+            try{
+                return doCallApiGateway(url);
+            } catch (Exception e) {
+                if (e instanceof HttpClientErrorException) {
+                    HttpClientErrorException ex = (HttpClientErrorException) e;
+                    if (HttpStatus.FORBIDDEN == ex.getStatusCode()) {
+                        log.error(e.getMessage());
+                        log.info("Received 403 from API Gateway.");
+                        makeHeaderGenerator(url);
+                        if (this.headerGenerator == null) {
+                            log.error("Failed to generate resources required for AWS Signature V4 to authenticate with API Gateway.");
+                        }
+                    }
+                }
+                log.error("Error encountered while calling remote host: {}", e.getMessage());
+            }
+            retry += 1;
+        }
+        return null;
+    }
+
+    private Response doCallApiGateway(String url) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
         HashMap<String, List<String>> queryStrings = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : builder.build().getQueryParams().entrySet()) {
@@ -283,7 +320,7 @@ public class AccountsStatus {
     }
 
     private String findMostRecentTime(Response response) {
-        List<Instant> instants = new ArrayList();
+        List<Instant> instants = new ArrayList<>();
         HashMap<Instant, String> map = new HashMap<>();
         DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
         for (Account account : response.getAccounts()) {
@@ -306,5 +343,17 @@ public class AccountsStatus {
 
         log.debug("Most recent timestamp is {}", oldest.toString());
         return map.get(oldest);
+    }
+
+    private void setBackoffTime() {
+        int count = retryCount.getAndIncrement();
+        long waitTime = (long) Math.pow(2, count) * 1000L;
+        if (waitTime > maxBackoffTime) {
+            waitTime = maxBackoffTime;
+        }
+        Random random = new Random();
+        long randWait = random.nextInt(10) * 100L;
+        nextTry = Instant.now().plusMillis(waitTime - randWait);
+        log.info("Next try: {}", nextTry.toString());
     }
 }
