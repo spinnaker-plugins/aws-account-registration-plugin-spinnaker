@@ -136,9 +136,6 @@ public final class EcsProviderUtils {
             AgentScheduler agentScheduler = ecsProvider.getAgentScheduler();
             for (String accountName : namesOfDeletedAccounts) {
                 List<Agent> agentsToRemove = getECSAgentsHandleAccount(ecsProvider, accountName);
-//                List<Agent> agentsToDelete = ecsProvider.getAgents().stream()
-//                        .filter(agent -> agent.handlesAccount(accountName))
-//                        .collect(Collectors.toList());
                 if (agentScheduler != null) {
                     agentsToRemove.forEach(agentScheduler::unschedule);
                 }
