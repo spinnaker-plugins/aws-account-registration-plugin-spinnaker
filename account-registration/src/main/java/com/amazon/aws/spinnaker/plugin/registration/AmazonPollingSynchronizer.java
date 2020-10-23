@@ -18,6 +18,8 @@
 package com.amazon.aws.spinnaker.plugin.registration;
 
 import com.netflix.spinnaker.cats.module.CatsModule;
+import com.netflix.spinnaker.clouddriver.aws.provider.AwsInfrastructureProvider;
+import com.netflix.spinnaker.clouddriver.aws.provider.AwsProvider;
 import com.netflix.spinnaker.clouddriver.aws.security.DefaultAccountConfigurationProperties;
 import com.netflix.spinnaker.clouddriver.aws.security.NetflixAmazonCredentials;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
@@ -25,7 +27,6 @@ import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsLoader;
 import com.netflix.spinnaker.clouddriver.ecs.provider.view.EcsAccountMapper;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
@@ -45,6 +46,8 @@ class AmazonPollingSynchronizer {
     private final LazyLoadCredentialsRepository lazyLoadCredentialsRepository;
     private final DefaultAccountConfigurationProperties defaultAccountConfigurationProperties;
     private CatsModule catsModule;
+    private AwsProvider awsProvider;
+    private AwsInfrastructureProvider awsInfrastructureProvider;
     // ECS accounts
     private ECSCredentialsConfig ecsCredentialsConfig;
     private final ApplicationContext applicationContext;
@@ -95,12 +98,19 @@ class AmazonPollingSynchronizer {
         // due to it passing NetflixAmazonCredentials, which includes NetflixAssumeRoleEcsCredentials, to
         // ProviderUtils.calculateAccountDeltas()
         credentialsConfig.setAccounts(accountsStatus.getEC2AccountsAsList());
+        if (this.awsProvider == null) {
+            this.awsProvider = (AwsProvider) applicationContext.getBean("awsProvider");
+        }
+        if (this.awsInfrastructureProvider == null) {
+            this.awsInfrastructureProvider = (AwsInfrastructureProvider) applicationContext.getBean("awsInfrastructureProvider");
+        }
         AmazonProviderUtils.AmazonAccountsSynchronizer(
                 credentialsLoader,
                 credentialsConfig,
                 lazyLoadCredentialsRepository,
                 defaultAccountConfigurationProperties,
-                catsModule
+                awsProvider,
+                awsInfrastructureProvider
         );
         // Sync ECS credentials in repo
         log.info("Total of {} ECS accounts will be in credential repository", accountsStatus.getECSAccountsAsList().size());
