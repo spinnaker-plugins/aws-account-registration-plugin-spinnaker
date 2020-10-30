@@ -1,14 +1,13 @@
 buildscript {
   repositories {
     mavenCentral()
-    maven { url "https://dl.bintray.com/spinnaker/gradle/" }
   }
   dependencies {
-    classpath("com.netflix.spinnaker.gradle:spinnaker-extensions:$spinnakerGradleVersion")
   }
 }
 
 plugins {
+  id("io.spinnaker.plugin.bundler").version("$spinnakerGradleVersion")
   id("com.palantir.git-version").version("0.12.2")
 }
 apply plugin: "io.spinnaker.plugin.bundler"

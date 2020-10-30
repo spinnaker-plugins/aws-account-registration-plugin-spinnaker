@@ -22,6 +22,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.google.common.collect.ImmutableList;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
@@ -50,7 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AccountsStatus {
     public HashMap<String, CredentialsConfig.Account> ec2Accounts;
     public HashMap<String, ECSCredentialsConfig.Account> ecsAccounts;
-    public List<String> deletedAccounts;
     private String lastSyncTime;
     private String lastAttemptedTIme;
     private String remoteHostUrl;
@@ -89,14 +89,14 @@ public class AccountsStatus {
     }
 
     public List<CredentialsConfig.Account> getEC2AccountsAsList() {
-        return new ArrayList<>(ec2Accounts.values());
+        return ImmutableList.copyOf(ec2Accounts.values());
     }
 
     public List<ECSCredentialsConfig.Account> getECSAccountsAsList() {
-        return new ArrayList<>(ecsAccounts.values());
+        return ImmutableList.copyOf(ecsAccounts.values());
     }
 
-    public boolean getDesiredAccounts() {
+    public synchronized boolean getDesiredAccounts() {
         if (nextTry != null && Instant.now().isBefore(nextTry)) {
             log.debug("In backoff time. Will not attempt to retrieve accounts.");
             return false;
@@ -126,6 +126,10 @@ public class AccountsStatus {
                 Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
                     accounts.addAll(nextResponse.getAccounts());
+                    if (nextResponse.getPagination() == null){
+                        nextUrl = null;
+                        continue;
+                    }
                     nextUrl = nextResponse.getPagination().getNextUrl();
                     continue;
                 }
@@ -147,9 +151,10 @@ public class AccountsStatus {
         log.info("Setting last sync attempt time to {}", mostRecentTime);
         this.lastAttemptedTIme = mostRecentTime;
         log.info("Converting {} accounts to Spinnaker account types.", response.getAccounts().size());
-        if (response.convertCredentials()) {
+        if (response.convertCredentials(credentialsConfig)) {
             buildDesiredAccountConfig(response.getEc2Accounts(), response.getEcsAccounts(), response.getDeletedAccounts(),
                     response.getAccountsToCheck());
+            markSynced();
             return true;
         }
         log.info("No valid accounts to process.");
@@ -275,17 +280,19 @@ public class AccountsStatus {
                 if (e instanceof HttpClientErrorException) {
                     HttpClientErrorException ex = (HttpClientErrorException) e;
                     if (HttpStatus.FORBIDDEN == ex.getStatusCode()) {
-                        log.error(e.getMessage());
-                        log.info("Received 403 from API Gateway.");
+                        log.info("Received 403 from API Gateway: {}", e.getMessage());
                         makeHeaderGenerator(url);
                         if (this.headerGenerator == null) {
                             log.error("Failed to generate resources required for AWS Signature V4 to authenticate with API Gateway.");
+                            break;
                         }
+                        retry += 1;
+                        continue;
                     }
                 }
                 log.error("Error encountered while calling remote host: {}", e.getMessage());
+                break;
             }
-            retry += 1;
         }
         return null;
     }

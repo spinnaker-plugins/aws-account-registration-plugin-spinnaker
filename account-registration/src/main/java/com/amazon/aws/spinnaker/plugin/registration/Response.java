@@ -21,12 +21,14 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.RegionUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.netflix.spinnaker.clouddriver.aws.security.config.AmazonCredentialsParser;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Data
@@ -66,7 +68,7 @@ public class Response {
         }};
     }
 
-    private CredentialsConfig.Account makeEC2Account(Account account) {
+    private CredentialsConfig.Account makeEC2Account(CredentialsConfig credentialsConfig, Account account) {
         List<CredentialsConfig.Region> regions = new ArrayList<>();
         for (String region : account.getRegions()) {
             CredentialsConfig.Region regionToAdd = new CredentialsConfig.Region();
@@ -84,10 +86,10 @@ public class Response {
         if (!account.getAssumeRole().toLowerCase().startsWith("role/")) {
             ec2Account.setAssumeRole(String.format("role/%s", account.getAssumeRole()));
         }
-        return ec2Account;
+        return setDefaults(credentialsConfig, ec2Account);
     }
 
-    public boolean convertCredentials() {
+    public boolean convertCredentials(CredentialsConfig credentialsConfig) {
         HashMap<String, CredentialsConfig.Account> ec2Accounts = new HashMap<>();
         HashMap<String, ECSCredentialsConfig.Account> ecsAccounts = new HashMap<>();
         List<String> deletedAccounts = new ArrayList<>();
@@ -109,7 +111,7 @@ public class Response {
                 deletedAccounts.add(accountName);
                 continue;
             }
-            CredentialsConfig.Account ec2Account = makeEC2Account(account);
+            CredentialsConfig.Account ec2Account = makeEC2Account(credentialsConfig, account);
             ec2Account.setLambdaEnabled(false);
             Set<String> cleanedProviders = generateCleanedSet(account.getProviders());
             for (String provider : cleanedProviders) {
@@ -149,6 +151,89 @@ public class Response {
             return false;
         }
         return true;
+    }
+
+
+    public CredentialsConfig.Account setDefaults(CredentialsConfig config, CredentialsConfig.Account account) {
+        if (account.getEnvironment() == null) {
+            account.setEnvironment(account.getName());
+        }
+        if (account.getAccountType() == null) {
+            account.setAccountType(account.getName());
+        }
+        if (account.getDefaultSecurityGroups() == null) {
+            account.setDefaultSecurityGroups(config.getDefaultSecurityGroups());
+        }
+        if (account.getLifecycleHooks() == null) {
+            account.setLifecycleHooks(config.getDefaultLifecycleHooks());
+        }
+        account.setEnabled(Optional.ofNullable(account.getEnabled()).orElse(true));
+
+        Map<String, String> templateContext = new HashMap<>();
+        templateContext.put("name", account.getName());
+        templateContext.put("accountId", account.getAccountId());
+        templateContext.put("environment", account.getEnvironment());
+        templateContext.put("accountType", account.getAccountType());
+        account.setDefaultKeyPair(
+                getDefaultValue(templateContext, account.getDefaultKeyPair(), config.getDefaultKeyPairTemplate())
+        );
+        account.setEdda(
+                getDefaultValue(templateContext, account.getEdda(), config.getDefaultEddaTemplate()));
+        account.setFront50(
+                getDefaultValue(
+                        templateContext, account.getFront50(), config.getDefaultFront50Template()));
+        account.setDiscovery(
+                getDefaultValue(
+                        templateContext, account.getDiscovery(), config.getDefaultDiscoveryTemplate()));
+        account.setAssumeRole(
+                getDefaultValue(
+                        templateContext, account.getAssumeRole(), config.getDefaultAssumeRole()));
+        account.setSessionName(
+                getDefaultValue(
+                        templateContext, account.getSessionName(), config.getDefaultSessionName()));
+        account.setBastionHost(
+                getDefaultValue(
+                        templateContext, account.getBastionHost(), config.getDefaultBastionHostTemplate()));
+        if (account.getLifecycleHooks() != null) {
+            for (CredentialsConfig.LifecycleHook lifecycleHook : account.getLifecycleHooks()) {
+                lifecycleHook.setRoleARN(
+                        getDefaultValue(
+                                templateContext,
+                                lifecycleHook.getRoleARN(),
+                                config.getDefaultLifecycleHookRoleARNTemplate()));
+                lifecycleHook.setNotificationTargetARN(
+                        getDefaultValue(
+                                templateContext,
+                                lifecycleHook.getNotificationTargetARN(),
+                                config.getDefaultLifecycleHookNotificationTargetARNTemplate()));
+            }
+        }
+        return account;
+    }
+
+    private static String getDefaultValue(Map<String, String> substitutions, String... values) {
+        for (String value : values) {
+            if (value != null) {
+                String base = value;
+                int iterations = 0;
+                boolean changed = true;
+                while (changed && iterations < 10) {
+                    iterations++;
+                    String previous = base;
+                    for (Map.Entry<String, String> substitution : substitutions.entrySet()) {
+                        base =
+                                base.replaceAll(
+                                        Pattern.quote("{{" + substitution.getKey() + "}}"), substitution.getValue());
+                    }
+                    changed = !previous.equals(base);
+                }
+                if (changed) {
+                    throw new RuntimeException("too many levels of templatery");
+                }
+                return base;
+            }
+        }
+        return null;
     }
 
     private boolean shouldConvert(Account account) {

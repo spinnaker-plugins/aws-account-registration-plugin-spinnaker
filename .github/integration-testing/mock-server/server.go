@@ -6,39 +6,28 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
-
-var accounts = make(map[string]Account)
 
 func hello(w http.ResponseWriter, req *http.Request) {
 	lt := req.URL.Query().Get("UpdatedAt.gt")
 	var rAccs []Account
 	if lt != "" {
-		givenTime, err := time.Parse(time.RFC3339Nano, lt)
+		lts := strings.Replace(lt, " ", "+", 1)
+		givenTime, err := time.Parse(time.RFC3339Nano, lts)
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
-		if modified(givenTime) {
-			newAccounts := loadJSON()
-			for _, v := range newAccounts.Accounts {
-				accounts[v.AccountName] = v
-				rAccs = append(rAccs, v)
-			}
-
-			//for _, a := range accounts {
-			//	rAccs = append(rAccs, a)
-			//}
+		accountsToReturn, mostRecentTime := loadJSON()
+		if givenTime.Before(mostRecentTime) {
+			rAccs = append(rAccs, accountsToReturn.Accounts...)
 		}
 	} else {
-		currentAcounts := loadJSON()
-		for _, v := range currentAcounts.Accounts {
-			accounts[v.AccountName] = v
-			rAccs = append(rAccs, v)
-		}
-		//for _, v := range accounts {
-		//	rAccs = append(rAccs, v)
-			}
+		currentAcounts, _ := loadJSON()
+		rAccs = append(rAccs, currentAcounts.Accounts...)
+	}
 
 	resp := Response{
 		Accounts: rAccs,
@@ -48,23 +37,12 @@ func hello(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-func modified(t time.Time) bool {
-	info, err := os.Stat("response.json")
-	if err != nil {
-		fmt.Println(err)
-	}
-	if info.ModTime().UTC().After(t) {
-		return true
-	}
-	return false
-}
-
-func loadJSON() Response {
+func loadJSON() (Response, time.Time) {
 	var res Response
 	file, err := os.Open("response.json")
 	if err != nil {
 		fmt.Println("Err opening file")
-		return res
+		return res, time.Time{}
 	}
 	defer file.Close()
 
@@ -72,45 +50,31 @@ func loadJSON() Response {
 	err = dec.Decode(&res)
 	if err != nil {
 		fmt.Println("Error decoding")
-		return res
+		return res, time.Time{}
 	}
-
+	var mostRecent time.Time
 	for i, v := range res.Accounts {
 		timeInt, err := strconv.ParseInt(v.UpdatedAt, 10, 64)
 		if err != nil {
 			fmt.Printf("error parsing time stamp: %s", v.UpdatedAt)
-			return Response{}
+			return Response{}, time.Time{}
 		}
 		unixTime := time.Unix(0, timeInt).UTC()
 		rfcTime := unixTime.Format(time.RFC3339Nano)
 		res.Accounts[i].UpdatedAt = rfcTime
+		if unixTime.After(mostRecent) {
+			mostRecent = unixTime
+		}
 	}
-	return res
+	return res, mostRecent
 }
 
 func main() {
-	accs := loadJSON()
-	for _, v := range accs.Accounts {
-		accounts[v.AccountName] = v
-	}
 	http.HandleFunc("/hello", hello)
 	http.HandleFunc("/hello/", hello)
 	http.ListenAndServe(":8080", nil)
 }
 
-
-//type Response struct {
-//	Accounts []Account `json:"Accounts"`
-//	Bookmark int64                  `json:"Bookmark"` // required
-//
-//}
-
-
-type Permissions struct {
-	READ    []string `json:"READ"`
-	WRITE   []string `json:"WRITE"`
-	EXECUTE []string `json:"EXECUTE"`
-}
 type Response struct {
 	Accounts   []Account `json:"SpinnakerAccounts"`
 	Pagination struct {
