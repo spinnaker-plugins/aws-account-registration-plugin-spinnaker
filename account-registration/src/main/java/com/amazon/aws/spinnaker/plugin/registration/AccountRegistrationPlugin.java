@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+// Must use PrivilegedSpringPlugin because we need to load our beans in main application context.
 @Slf4j
 public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
 
@@ -40,13 +41,14 @@ public class AccountRegistrationPlugin extends PrivilegedSpringPlugin {
         BeanDefinition lazyLoadCredentialsRepositoryDefinition = primaryBeanDefinitionFor(LazyLoadCredentialsRepository.class);
         try {
             log.debug("Registering bean: {}", lazyLoadCredentialsRepositoryDefinition.getBeanClassName());
-            registry.registerBeanDefinition("accountCredentialsRepository", lazyLoadCredentialsRepositoryDefinition);
+            registry.registerBeanDefinition("amazonCredentialsRepository", lazyLoadCredentialsRepositoryDefinition);
         } catch (BeanDefinitionStoreException e) {
             log.error("Could not register bean {}", lazyLoadCredentialsRepositoryDefinition.getBeanClassName());
         }
-        List<Class> classes = new ArrayList<>(Arrays.asList(AmazonPollingSynchronizer.class,
-                AmazonEC2InfraCachingAgentScheduler.class,
-                AmazonAWSCachingAgentScheduler.class, AmazonECSCachingAgentScheduler.class, AccountsStatus.class));
+        List<Class> classes = new ArrayList<>(Arrays.asList(
+                EcsCredentialsDefinitionSource.class,
+                AwsCredentialsDefinitionSource.class,
+                AccountsStatus.class));
         for (Class classToAdd : classes) {
             BeanDefinition beanDefinition = beanDefinitionFor(classToAdd);
             try {

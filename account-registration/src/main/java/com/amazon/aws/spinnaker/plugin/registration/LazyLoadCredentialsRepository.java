@@ -17,35 +17,32 @@
 
 package com.amazon.aws.spinnaker.plugin.registration;
 
-import com.netflix.spinnaker.clouddriver.security.AccountCredentials;
-import com.netflix.spinnaker.clouddriver.security.MapBackedAccountCredentialsRepository;
-import lombok.SneakyThrows;
+import com.netflix.spinnaker.clouddriver.aws.security.NetflixAmazonCredentials;
+import com.netflix.spinnaker.credentials.CredentialsLifecycleHandler;
+import com.netflix.spinnaker.credentials.MapBackedCredentialsRepository;
+import com.netflix.spinnaker.credentials.definition.AbstractCredentialsLoader;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 
-@Component
 @Slf4j
-class LazyLoadCredentialsRepository extends MapBackedAccountCredentialsRepository {
-    AmazonPollingSynchronizer synchronizer;
+class LazyLoadCredentialsRepository extends MapBackedCredentialsRepository<NetflixAmazonCredentials> {
+    AbstractCredentialsLoader<? extends NetflixAmazonCredentials> loader;
 
-    @Autowired
-    public void setSynchronizer(AmazonPollingSynchronizer synchronizer) {
-        this.synchronizer = synchronizer;
+    public LazyLoadCredentialsRepository(
+            @Lazy CredentialsLifecycleHandler<NetflixAmazonCredentials> eventHandler,
+            @Lazy @Qualifier("amazonCredentialsLoader") AbstractCredentialsLoader<? extends NetflixAmazonCredentials> loader) {
+        super("aws", eventHandler);
+        this.loader = loader;
     }
 
-    @SneakyThrows
     @Override
-    public AccountCredentials getOne(String key) {
-        AccountCredentials cred = super.getOne(key);
+    public NetflixAmazonCredentials getOne(String key) {
+        NetflixAmazonCredentials cred = super.getOne(key);
         if (cred == null) {
             log.info("Could not find account, {}. Checking remote repository.", key);
-            synchronizer.sync();
-            cred = super.getOne(key);
-            if (cred != null) {
-                return cred;
-            }
-            log.info("Could not find account, {}, in remote repository.", key);
+            loader.load();
+            return super.getOne(key);
         }
         return cred;
     }
