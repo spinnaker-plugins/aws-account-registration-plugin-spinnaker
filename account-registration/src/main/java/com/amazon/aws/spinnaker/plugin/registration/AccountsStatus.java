@@ -81,6 +81,8 @@ public class AccountsStatus {
                 .setConnectTimeout(Duration.ofMillis(connectionTimeout))
                 .setReadTimeout(Duration.ofMillis(connectionTimeout))
                 .build();
+        this.ec2Accounts = new HashMap<>();
+        this.ecsAccounts = new HashMap<>();
     }
 
     @Autowired(required = false)

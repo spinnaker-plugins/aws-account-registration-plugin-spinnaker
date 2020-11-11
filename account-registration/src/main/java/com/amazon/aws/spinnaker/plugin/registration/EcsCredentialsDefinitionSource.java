@@ -9,7 +9,6 @@ import java.util.List;
 public class EcsCredentialsDefinitionSource implements CredentialsDefinitionSource<ECSCredentialsConfig.Account> {
     private final AccountsStatus accountsStatus;
     private final ECSCredentialsConfig ecsCredentialsConfig;
-    private List<ECSCredentialsConfig.Account> ecsCredentialsDefinitions;
 
     public EcsCredentialsDefinitionSource(AccountsStatus accountsStatus, ECSCredentialsConfig ecsCredentialsConfig) {
         this.accountsStatus = accountsStatus;
@@ -18,11 +17,13 @@ public class EcsCredentialsDefinitionSource implements CredentialsDefinitionSour
 
     @Override
     public List<ECSCredentialsConfig.Account> getCredentialsDefinitions() {
-        if (ecsCredentialsDefinitions == null) {
+        List<ECSCredentialsConfig.Account> remoteList = accountsStatus.getECSAccountsAsList();
+        List<ECSCredentialsConfig.Account> ecsCredentialsDefinitions;
+        if (!remoteList.isEmpty()) {
+            ecsCredentialsDefinitions = remoteList;
+        } else {
             ecsCredentialsDefinitions = ecsCredentialsConfig.getAccounts();
         }
-        ecsCredentialsDefinitions = accountsStatus.getECSAccountsAsList();
-
         return ImmutableList.copyOf(ecsCredentialsDefinitions);
     }
 }
