@@ -79,7 +79,7 @@ public class AccountsStatus {
         this.restTemplate = new RestTemplateBuilder()
                 .interceptors(new PlusEncoderInterceptor())
                 .setConnectTimeout(Duration.ofMillis(connectionTimeout))
-                .setReadTimeout(Duration.ofMillis(connectionTimeout))
+                .setReadTimeout(Duration.ofMillis(readTimeout))
                 .build();
         this.ec2Accounts = new HashMap<>();
         this.ecsAccounts = new HashMap<>();
