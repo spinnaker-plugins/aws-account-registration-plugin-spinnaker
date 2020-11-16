@@ -43,22 +43,23 @@ This plugin expects the following JSON payload from the configured remote host, 
 }
 ```
 
-## Note
+### Note
 1. Plugin performs `GET` with query string field `UpdatedAt.gt=<TIME>` after the initial sync.
 Expectation is that the remote host will return accounts that were updated after the specified time by the field.
 This is done to avoid returning and processing all accounts every time sync occurs. 
 2. The `UpdatedAt.gt` field value is determined using the most recent time value provided in the `UpdatedAt` JSON field.
 E.g. if two accounts were retruned with timestamps `2020-08-27T16:52:59.026696+00:00` and `2030-12-27T16:52:59.026696+00:00`, 
 next request will have a query string field `UpdatedAt.gt=2030-12-27T16:52:59.026696+00:00`. 
-2. The `SpinnakerProviders` JSON field means the following:
+3. The `SpinnakerProviders` JSON field means the following:
     - If empty, AWS and ECS accounts are removed.
     - If only `ec2` is specified, Spinnaker AWS account is created.
     - If only `lambda` is specified, Spinnaker AWS account with Lambda support is created.
     - If `ecs` is specified, Spinnaker AWS and ECS accounts are created.
-3. ECS accounts are named with corresponding AWS account's name with "-ecs" suffix. 
+4. ECS accounts are named with corresponding AWS account's name with "-ecs" suffix. 
 E.g. ECS account is named `account1-ecs` if its corresponding AWS account name is `account1`
-4. If the `SpinnakerProviders` field is set to `SUSPENDED`,  AWS and ECS accounts are removed.
-5. If the `NextUrl` field is present, plugin will perform a `GET` request against the URL specified by the field. Returned accounts are aggregated, then processed.
+5. If the `SpinnakerProviders` field is set to `SUSPENDED`,  AWS and ECS accounts are removed.
+6. If the `NextUrl` field is present, plugin will perform a `GET` request against the URL specified by the field. Returned accounts are aggregated, then processed.
+7. Failure paths are [available here:](doc/failure_paths.md)
 
 
 ### Usage
@@ -129,7 +130,8 @@ credentials:
         ecs:
           reloadFrequencyMs: 20000 # Specify how often in milliseconds credentials should be synced.
 ```
-
+### Developer guide
+Developer guide for this plugin is [available here](doc/developer_guide.md): 
  
 ## Security
 
