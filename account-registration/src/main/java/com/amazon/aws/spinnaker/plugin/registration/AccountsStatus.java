@@ -23,6 +23,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
@@ -43,8 +44,15 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -66,6 +74,7 @@ public class AccountsStatus {
     private final CredentialsConfig credentialsConfig;
     private ECSCredentialsConfig ecsCredentialsConfig;
     private HeaderGenerator headerGenerator;
+    private boolean initialSync;
 
     @Autowired
     AccountsStatus(
@@ -83,6 +92,7 @@ public class AccountsStatus {
                 .build();
         this.ec2Accounts = new HashMap<>();
         this.ecsAccounts = new HashMap<>();
+        this.initialSync = true;
     }
 
     @Autowired(required = false)
@@ -108,7 +118,7 @@ public class AccountsStatus {
         } else {
             log.info("Last sync time is not set. Will perform a full sync.");
         }
-        Response response = null;
+        Response response;
         try {
             response = getResourceFromRemoteHost(remoteHostUrl);
         } catch (Exception e) {
@@ -128,7 +138,7 @@ public class AccountsStatus {
                 Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
                     accounts.addAll(nextResponse.getAccounts());
-                    if (nextResponse.getPagination() == null){
+                    if (nextResponse.getPagination() == null) {
                         nextUrl = null;
                         continue;
                     }
@@ -163,51 +173,43 @@ public class AccountsStatus {
         return false;
     }
 
-    private void buildDesiredAccountConfig(HashMap<String, CredentialsConfig.Account> ec2Accounts,
-                                           HashMap<String, ECSCredentialsConfig.Account> ecsAccounts,
+    private void buildDesiredAccountConfig(HashMap<String, CredentialsConfig.Account> ec2AccountsFromRemote,
+                                           HashMap<String, ECSCredentialsConfig.Account> ecsAccountsFromRemote,
                                            List<String> deletedAccounts, List<String> accountsToCheck) {
         // Always use external source as credentials repo's correct state.
+        // CredentialsConfig should be considered on initial sync only since it contains accounts from local file only.
         if (credentialsConfig.getAccounts() == null) {
             log.error("Current configured accounts is null. Very likely this is a configuration issue.");
             return;
         }
-        for (CredentialsConfig.Account currentAccount : credentialsConfig.getAccounts()) {
-            for (CredentialsConfig.Account sourceAccount : ec2Accounts.values()) {
-                if (currentAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentAccount.getName())) {
-                    log.info("Account info for existing EC2 account \"{}\" will be updated.", sourceAccount.getName());
-                    currentAccount = null;
-                    break;
-                }
-            }
-            if (currentAccount != null) {
-                ec2Accounts.put(currentAccount.getName(), currentAccount);
-            }
+        log.debug("Current configured EC2 accounts: {}", getEC2AccountsAsList().stream()
+                .map(CredentialsConfig.Account::getName).collect(Collectors.toList()));
+        log.debug("Current configured ECS accounts: {}", getECSAccountsAsList().stream()
+                .map(ECSCredentialsConfig.Account::getName).collect(Collectors.toList()));
+        if (initialSync) {
+            log.debug("Initial sync. EC2 Accounts from file {}", credentialsConfig.getAccounts().stream()
+                    .map(CredentialsConfig.Account::getName).collect(Collectors.toList()));
+            log.debug("Initial sync. ECS Accounts from file {}", ecsCredentialsConfig.getAccounts().stream()
+                    .map(ECSCredentialsConfig.Account::getName).collect(Collectors.toList()));
+            resolveEC2Accounts(ec2AccountsFromRemote, credentialsConfig.getAccounts(), deletedAccounts);
+            resolveECSAccounts(ecsAccountsFromRemote, ecsCredentialsConfig.getAccounts(), deletedAccounts);
+        } else {
+            resolveEC2Accounts(ec2AccountsFromRemote, getEC2AccountsAsList(), deletedAccounts);
+            resolveECSAccounts(ecsAccountsFromRemote, getECSAccountsAsList(), deletedAccounts);
         }
-        for (ECSCredentialsConfig.Account currentECSAccount : ecsCredentialsConfig.getAccounts()) {
-            for (ECSCredentialsConfig.Account sourceAccount : ecsAccounts.values()) {
-                if (currentECSAccount.getName().equals(sourceAccount.getName()) || deletedAccounts.contains(currentECSAccount.getAwsAccount())) {
-                    log.info("Account info for existing ECS account \"{}\" will be updated.", sourceAccount.getName());
-                    currentECSAccount = null;
-                    break;
-                }
-            }
-            if (currentECSAccount != null) {
-                ecsAccounts.put(currentECSAccount.getName(), currentECSAccount);
-            }
-        }
-        for (String deletedAccount : deletedAccounts) {
-            ec2Accounts.remove(deletedAccount);
-            ecsAccounts.remove(deletedAccount + "-ecs");
-        }
+
+        // Ensure ECS account, which did not contain "ecs" in providers field in payload but ec2 account is to be kept, are removed.
         for (String ecsAccountsToRemove : accountsToCheck) {
             String ecsAccountName = ecsAccountsToRemove + "-ecs";
             log.info("ECS account, {}, will be removed.", ecsAccountName);
-            ecsAccounts.remove(ecsAccountName);
+            ecsAccountsFromRemote.remove(ecsAccountName);
         }
-        log.debug("Accounts to be updated in CredentialsConfig: {}", ec2Accounts.keySet());
-        log.debug("EC2 accounts to be updated in CredentialsConfig: {}", ec2Accounts.keySet());
-        this.setEc2Accounts(ec2Accounts);
-        this.setEcsAccounts(ecsAccounts);
+        log.debug("Accounts to be in credentials source: {}", ec2AccountsFromRemote.keySet());
+        log.debug("ECS accounts to be in ECS credential source: {}", ecsAccountsFromRemote.keySet());
+        log.info("EC2 accounts to be removed: {}. To be added {}", Sets.difference(ec2Accounts.keySet(), ec2AccountsFromRemote.keySet()), Sets.difference(ec2AccountsFromRemote.keySet(), ec2Accounts.keySet()));
+        log.info("ECS accounts to be removed: {}. To be added {}", Sets.difference(ecsAccounts.keySet(), ecsAccountsFromRemote.keySet()), Sets.difference(ecsAccountsFromRemote.keySet(), ecsAccounts.keySet()));
+        this.setEc2Accounts(ec2AccountsFromRemote);
+        this.setEcsAccounts(ecsAccountsFromRemote);
     }
 
     private Response getResourceFromRemoteHost(String url) {
@@ -236,6 +238,7 @@ public class AccountsStatus {
         this.retryCount.set(0);
         this.nextTry = null;
         this.lastSyncTime = this.lastAttemptedTIme;
+        this.initialSync = false;
     }
 
     private Response getResourceFromApiGateway(String url) {
@@ -276,7 +279,7 @@ public class AccountsStatus {
     private Response callApiGateway(String url) {
         int retry = 0;
         while (retry <= 1) {
-            try{
+            try {
                 return doCallApiGateway(url);
             } catch (Exception e) {
                 if (e instanceof HttpClientErrorException) {
@@ -364,5 +367,41 @@ public class AccountsStatus {
         long randWait = random.nextInt(10) * 100L;
         nextTry = Instant.now().plusMillis(waitTime - randWait);
         log.info("Next try: {}", nextTry.toString());
+    }
+
+    private void resolveEC2Accounts(HashMap<String, CredentialsConfig.Account> changedAccounts,
+                                    List<CredentialsConfig.Account> currentAccounts,
+                                    List<String> deletedAccounts) {
+        for (CredentialsConfig.Account currentAccount : currentAccounts) {
+            if (deletedAccounts.contains(currentAccount.getName())) {
+                log.debug("EC2 account \"{}\" is in deleted account list and will be removed.", currentAccount.getName());
+                continue;
+            }
+            if (changedAccounts.containsKey(currentAccount.getName())) {
+                log.info("EC2 account \"{}\" will be updated.", currentAccount.getName());
+                continue;
+            }
+            changedAccounts.put(currentAccount.getName(), currentAccount);
+        }
+    }
+
+    private void resolveECSAccounts(HashMap<String, ECSCredentialsConfig.Account> changedAccounts,
+                                    List<ECSCredentialsConfig.Account> currentAccounts,
+                                    List<String> deletedAccounts) {
+        if (currentAccounts == null) {
+            log.debug("ECS is not configured. Nothing to do.");
+            return;
+        }
+        for (ECSCredentialsConfig.Account currentAccount : currentAccounts) {
+            if (deletedAccounts.contains(currentAccount.getAwsAccount())) {
+                log.debug("EC2 account \"{}\" is in deleted account list and corresponding ECS account will be removed.", currentAccount.getName());
+                continue;
+            }
+            if (changedAccounts.containsKey(currentAccount.getName())) {
+                log.info("EC2 account \"{}\" will be updated.", currentAccount.getName());
+                continue;
+            }
+            changedAccounts.put(currentAccount.getName(), currentAccount);
+        }
     }
 }

@@ -182,6 +182,167 @@ class AccountsStatusSpec extends Specification {
         accountsStatus.getLastSyncTime() == "2020-10-25T16:52:59.026696+00:00"
         !accountsStatus.getEc2Accounts().containsKey("test20")
         !accountsStatus.getEcsAccounts().containsKey("test20-ecs")
+        accountsStatus.getEC2AccountsAsList().size() == 2
+    }
+
+    def "it should remove one account only after initial sync"() {
+        given:
+        AccountsStatus accountsStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/", 0L, 0L) {{
+            restTemplate = mockRest
+            setECSCredentialsConfig(ecsConfig)
+        }}
+        Response response = new Response(){{
+            accounts = [
+                    new Account(){{
+                        name = "test2"
+                        accountId = "2"
+                        assumeRole = "role/role2"
+                        regions = ["us-west-2", "us-west-1"]
+                        providers = ["ecs", "ec2"]
+                        updatedAt = "2020-10-25T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }},
+                    new Account(){{
+                        name = "test3"
+                        accountId = "3"
+                        assumeRole = "role/role3"
+                        regions = ["us-east-2" ]
+                        providers = ["ecs", "ec2"]
+                        updatedAt = "2020-10-25T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }}
+            ]
+        }}
+        Response response2 = new Response(){{
+            accounts = [
+                    new Account(){{
+                        name = "test2"
+                        accountId = "2"
+                        assumeRole = "role/role22"
+                        regions = ["us-west-2", "us-west-1"]
+                        providers = []
+                        updatedAt = "2020-10-26T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }}
+            ]
+        }}
+
+        when:
+        accountsStatus.getDesiredAccounts()
+        accountsStatus.getDesiredAccounts()
+
+        then:
+        2 * mockRest.getForObject(_, _) >>> [response, response2]
+        accountsStatus.getLastSyncTime() == "2020-10-26T16:52:59.026696+00:00"
+        !accountsStatus.getEc2Accounts().containsKey("test2")
+        accountsStatus.getEc2Accounts().containsKey("test3")
+        !accountsStatus.getEcsAccounts().containsKey("test2-ecs")
+        accountsStatus.getEC2AccountsAsList().size() == 4
+        accountsStatus.getECSAccountsAsList().size() == 3
+    }
+
+    def "it should update one account only after initial sync"() {
+        given:
+        AccountsStatus accountsStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/", 0L, 0L) {{
+            restTemplate = mockRest
+            setECSCredentialsConfig(ecsConfig)
+        }}
+        Response response = new Response(){{
+            accounts = [
+                    new Account(){{
+                        name = "test2"
+                        accountId = "2"
+                        assumeRole = "role/role2"
+                        regions = ["us-west-2", "us-west-1"]
+                        providers = ["ecs", "ec2"]
+                        updatedAt = "2020-10-25T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }},
+                    new Account(){{
+                        name = "test3"
+                        accountId = "3"
+                        assumeRole = "role/role3"
+                        regions = ["us-east-2" ]
+                        providers = ["ecs", "ec2"]
+                        updatedAt = "2020-10-25T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }}
+            ]
+        }}
+        Response response2 = new Response(){{
+            accounts = [
+                    new Account(){{
+                        name = "test2"
+                        accountId = "2"
+                        assumeRole = "role/role22"
+                        regions = ["us-west-2", "us-west-1"]
+                        providers = ["ec2"]
+                        updatedAt = "2020-10-26T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }}
+            ]
+        }}
+
+        when:
+        accountsStatus.getDesiredAccounts()
+        accountsStatus.getDesiredAccounts()
+
+        then:
+        2 * mockRest.getForObject(_, _) >>> [response, response2]
+        accountsStatus.getLastSyncTime() == "2020-10-26T16:52:59.026696+00:00"
+        accountsStatus.getEc2Accounts().containsKey("test2")
+        accountsStatus.getEc2Accounts().containsKey("test3")
+        !accountsStatus.getEcsAccounts().containsKey("test2-ecs")
+        accountsStatus.getEC2AccountsAsList().size() == 5
+        accountsStatus.getECSAccountsAsList().size() == 3
+    }
+
+    def "it should add one account only after initial sync"() {
+        given:
+        AccountsStatus accountsStatus = new AccountsStatus(credentialsConfig, "http://localhost:8080/hello/", 0L, 0L) {{
+            restTemplate = mockRest
+            setECSCredentialsConfig(ecsConfig)
+        }}
+        Response response = new Response(){{
+            accounts = [
+                    new Account(){{
+                        name = "test2"
+                        accountId = "2"
+                        assumeRole = "role/role2"
+                        regions = ["us-west-2", "us-west-1"]
+                        providers = ["ecs", "ec2"]
+                        updatedAt = "2020-10-25T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }}
+            ]
+        }}
+        Response response2 = new Response(){{
+            accounts = [
+                    new Account(){{
+                        name = "test3"
+                        accountId = "3"
+                        assumeRole = "role/role3"
+                        regions = ["us-west-2", "us-west-1"]
+                        providers = ["ec2", "ecs"]
+                        updatedAt = "2020-10-26T16:52:59.026696+00:00"
+                        status = "ACTIVE"
+                    }}
+            ]
+        }}
+
+        when:
+        accountsStatus.getDesiredAccounts()
+        accountsStatus.getDesiredAccounts()
+
+        then:
+        2 * mockRest.getForObject(_, _) >>> [response, response2]
+        accountsStatus.getLastSyncTime() == "2020-10-26T16:52:59.026696+00:00"
+        accountsStatus.getEc2Accounts().containsKey("test2")
+        accountsStatus.getEc2Accounts().containsKey("test3")
+        accountsStatus.getEcsAccounts().containsKey("test2-ecs")
+        accountsStatus.getEcsAccounts().containsKey("test3-ecs")
+        accountsStatus.getEC2AccountsAsList().size() == 5
+        accountsStatus.getECSAccountsAsList().size() == 4
     }
 
     def "it should support API gateway and query strings"() {
