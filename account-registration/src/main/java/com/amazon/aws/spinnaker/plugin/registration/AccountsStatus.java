@@ -43,7 +43,13 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -131,7 +137,7 @@ public class AccountsStatus {
                 Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
                     accounts.addAll(nextResponse.getAccounts());
-                    if (nextResponse.getPagination() == null){
+                    if (nextResponse.getPagination() == null) {
                         nextUrl = null;
                         continue;
                     }
@@ -270,7 +276,7 @@ public class AccountsStatus {
     private Response callApiGateway(String url) {
         int retry = 0;
         while (retry <= 1) {
-            try{
+            try {
                 return doCallApiGateway(url);
             } catch (Exception e) {
                 if (e instanceof HttpClientErrorException) {
@@ -361,8 +367,8 @@ public class AccountsStatus {
     }
 
     private void resolveEC2Accounts(HashMap<String, CredentialsConfig.Account> changedAccounts,
-                                  List<CredentialsConfig.Account> currentAccounts,
-                                  List<String> deletedAccounts) {
+                                    List<CredentialsConfig.Account> currentAccounts,
+                                    List<String> deletedAccounts) {
         for (CredentialsConfig.Account currentAccount : currentAccounts) {
             if (deletedAccounts.contains(currentAccount.getName())) {
                 log.debug("EC2 account \"{}\" is in deleted account list and will be removed.", currentAccount.getName());
