@@ -23,6 +23,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
 import lombok.Data;
@@ -205,6 +206,8 @@ public class AccountsStatus {
         }
         log.debug("Accounts to be in credentials source: {}", ec2AccountsFromRemote.keySet());
         log.debug("ECS accounts to be in ECS credential source: {}", ecsAccountsFromRemote.keySet());
+        log.info("EC2 accounts to be removed: {}. To be added {}", Sets.difference(ec2Accounts.keySet(), ec2AccountsFromRemote.keySet()), Sets.difference(ec2AccountsFromRemote.keySet(), ec2Accounts.keySet()));
+        log.info("ECS accounts to be removed: {}. To be added {}", Sets.difference(ecsAccounts.keySet(), ecsAccountsFromRemote.keySet()), Sets.difference(ecsAccountsFromRemote.keySet(), ecsAccounts.keySet()));
         this.setEc2Accounts(ec2AccountsFromRemote);
         this.setEcsAccounts(ecsAccountsFromRemote);
     }
