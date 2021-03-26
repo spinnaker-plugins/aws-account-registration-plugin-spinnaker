@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.netflix.spinnaker.clouddriver.aws.security.config.CredentialsConfig;
 import com.netflix.spinnaker.clouddriver.ecs.security.ECSCredentialsConfig;
+import com.netflix.spinnaker.credentials.definition.CredentialsDefinition;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -191,11 +192,11 @@ public class AccountsStatus {
                     .map(CredentialsConfig.Account::getName).collect(Collectors.toList()));
             log.debug("Initial sync. ECS Accounts from file {}", ecsCredentialsConfig.getAccounts().stream()
                     .map(ECSCredentialsConfig.Account::getName).collect(Collectors.toList()));
-            resolveEC2Accounts(ec2AccountsFromRemote, credentialsConfig.getAccounts(), deletedAccounts);
-            resolveECSAccounts(ecsAccountsFromRemote, ecsCredentialsConfig.getAccounts(), deletedAccounts);
+            resolveAccounts(ec2AccountsFromRemote, credentialsConfig.getAccounts(), deletedAccounts);
+            resolveAccounts(ecsAccountsFromRemote, ecsCredentialsConfig.getAccounts(), deletedAccounts);
         } else {
-            resolveEC2Accounts(ec2AccountsFromRemote, getEC2AccountsAsList(), deletedAccounts);
-            resolveECSAccounts(ecsAccountsFromRemote, getECSAccountsAsList(), deletedAccounts);
+            resolveAccounts(ec2AccountsFromRemote, getEC2AccountsAsList(), deletedAccounts);
+            resolveAccounts(ecsAccountsFromRemote, getECSAccountsAsList(), deletedAccounts);
         }
 
         // Ensure ECS account, which did not contain "ecs" in providers field in payload but ec2 account is to be kept, are removed.
@@ -369,37 +370,30 @@ public class AccountsStatus {
         log.info("Next try: {}", nextTry.toString());
     }
 
-    private void resolveEC2Accounts(HashMap<String, CredentialsConfig.Account> changedAccounts,
-                                    List<CredentialsConfig.Account> currentAccounts,
-                                    List<String> deletedAccounts) {
-        for (CredentialsConfig.Account currentAccount : currentAccounts) {
-            if (deletedAccounts.contains(currentAccount.getName())) {
-                log.debug("EC2 account \"{}\" is in deleted account list and will be removed.", currentAccount.getName());
-                continue;
-            }
-            if (changedAccounts.containsKey(currentAccount.getName())) {
-                log.info("EC2 account \"{}\" will be updated.", currentAccount.getName());
-                continue;
-            }
-            changedAccounts.put(currentAccount.getName(), currentAccount);
-        }
-    }
-
-    private void resolveECSAccounts(HashMap<String, ECSCredentialsConfig.Account> changedAccounts,
-                                    List<ECSCredentialsConfig.Account> currentAccounts,
+    private <T extends CredentialsDefinition> void resolveAccounts(HashMap<String, T> changedAccounts,
+                                    List<T> currentAccounts,
                                     List<String> deletedAccounts) {
         if (currentAccounts == null) {
             log.debug("ECS is not configured. Nothing to do.");
             return;
         }
-        for (ECSCredentialsConfig.Account currentAccount : currentAccounts) {
-            if (deletedAccounts.contains(currentAccount.getAwsAccount())) {
-                log.debug("EC2 account \"{}\" is in deleted account list and corresponding ECS account will be removed.", currentAccount.getName());
-                continue;
-            }
-            if (changedAccounts.containsKey(currentAccount.getName())) {
-                log.info("EC2 account \"{}\" will be updated.", currentAccount.getName());
-                continue;
+        for (T currentAccount : currentAccounts) {
+            if (currentAccount instanceof ECSCredentialsConfig.Account) {
+                if (deletedAccounts.contains(((ECSCredentialsConfig.Account) currentAccount).getAwsAccount())) {
+                    log.debug("ECS account \"{}\"'s corresponding EC2 account is in deleted account list. ECS account will be removed.", currentAccount.getName());
+                    continue;
+                } else if (changedAccounts.containsKey(currentAccount.getName())){
+                    log.info("ECS account \"{}\" will be updated.", currentAccount.getName());
+                    continue;
+                }
+            } else {
+                if (deletedAccounts.contains(currentAccount.getName())) {
+                    log.debug("EC2 account \"{}\" is in deleted account list and will be removed.", currentAccount.getName());
+                    continue;
+                } else if (changedAccounts.containsKey(currentAccount.getName())) {
+                    log.info("EC2 account \"{}\" will be updated.", currentAccount.getName());
+                    continue;
+                }
             }
             changedAccounts.put(currentAccount.getName(), currentAccount);
         }
