@@ -18,7 +18,7 @@ sourceSets.main.java.srcDirs = ["src/main/java"]
 spinnakerPlugin {
   serviceName = "clouddriver"
   pluginClass = "com.amazon.aws.spinnaker.plugin.registration.AccountRegistrationPlugin"
-  requires = "clouddriver>=5.0.0"
+  requires = "clouddriver>=7.1.0"
 }
 
 
