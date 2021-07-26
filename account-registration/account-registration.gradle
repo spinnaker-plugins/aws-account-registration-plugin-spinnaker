@@ -18,43 +18,43 @@ sourceSets.main.java.srcDirs = ["src/main/java"]
 spinnakerPlugin {
   serviceName = "clouddriver"
   pluginClass = "com.amazon.aws.spinnaker.plugin.registration.AccountRegistrationPlugin"
-  requires = "clouddriver>=5.0.0"
+  requires = "clouddriver>=7.1.0"
 }
 
 
 dependencies {
   implementation "com.google.guava:guava:30.0-jre"
   compileOnly "org.codehaus.groovy:groovy-all:+"
-  compileOnly (group: 'org.springframework', name: 'spring-context', version: '5.2.4.RELEASE')
-  compileOnly (group: 'com.netflix.spinnaker.kork', name: 'kork-plugins-spring-api', version: "${korkVersion}")
-  compileOnly (group: 'org.springframework', name: 'spring-web', version: '5.2.4.RELEASE')
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-api:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-aws:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-ecs:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-lambda:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:cats-core:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-security:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-eureka:${clouddriverVersion}"
-  compileOnly "com.netflix.spinnaker.clouddriver:clouddriver-core:${clouddriverVersion}"
-  compileOnly 'com.netflix.spinnaker.fiat:fiat-core:1.22.0'
+  compileOnly (group: 'org.springframework', name: 'spring-context', version: '5.2.9.RELEASE')
+  compileOnly (group: 'io.spinnaker.kork', name: 'kork-plugins-spring-api', version: "${korkVersion}")
+  compileOnly (group: 'org.springframework', name: 'spring-web', version: '5.2.9.RELEASE')
+  compileOnly "io.spinnaker.clouddriver:clouddriver-api:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-aws:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-ecs:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-lambda:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:cats-core:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-security:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-eureka:${clouddriverVersion}"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-core:${clouddriverVersion}"
+  compileOnly "io.spinnaker.fiat:fiat-core:${fiatVersion}"
   compileOnly 'com.amazonaws:aws-java-sdk:1.11.802'
   compileOnly 'org.projectlombok:lombok:+'
-  compileOnly 'com.amazonaws:aws-java-sdk-core:1.11.802'
+  compileOnly 'com.amazonaws:aws-java-sdk-core:1.11.1009'
   annotationProcessor "org.projectlombok:lombok:+"
   annotationProcessor("org.pf4j:pf4j:$pf4jVersion")
 
-  testImplementation "com.netflix.spinnaker.clouddriver:clouddriver-api:${clouddriverVersion}"
-  testImplementation "com.netflix.spinnaker.clouddriver:clouddriver-aws:${clouddriverVersion}"
-  testImplementation "com.netflix.spinnaker.clouddriver:clouddriver-ecs:${clouddriverVersion}"
-  testImplementation "com.netflix.spinnaker.clouddriver:cats-core:${clouddriverVersion}"
-  testImplementation "com.netflix.spinnaker.clouddriver:clouddriver-security:${clouddriverVersion}"
-  testImplementation "com.netflix.spinnaker.clouddriver:clouddriver-eureka:${clouddriverVersion}"
-  testImplementation "com.netflix.spinnaker.clouddriver:clouddriver-core:${clouddriverVersion}"
-  testImplementation 'com.netflix.spinnaker.fiat:fiat-core:1.22.0'
+  testImplementation "io.spinnaker.clouddriver:clouddriver-api:${clouddriverVersion}"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-aws:${clouddriverVersion}"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-ecs:${clouddriverVersion}"
+  testImplementation "io.spinnaker.clouddriver:cats-core:${clouddriverVersion}"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-security:${clouddriverVersion}"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-eureka:${clouddriverVersion}"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-core:${clouddriverVersion}"
+  testImplementation "io.spinnaker.fiat:fiat-core:${fiatVersion}"
   testImplementation group: 'io.strikt', name: 'strikt-core', version: '0.22.1'
   testImplementation group: 'dev.minutest', name: 'minutest', version: '1.10.0'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.2.5.RELEASE'
-  testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.4.RELEASE'
+  testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.9.RELEASE'
   testImplementation 'com.amazonaws:aws-java-sdk-core:1.11.802'
   compile "org.codehaus.groovy:groovy:2.5.13"
   testCompile platform("org.spockframework:spock-bom:2.0-M3-groovy-2.5")
