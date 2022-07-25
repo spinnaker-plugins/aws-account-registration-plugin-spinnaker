@@ -10,7 +10,7 @@ the plugin will perform a sync with remote host to provide needed account (if fo
 3. Supports IAM authentication when used with API Gateway. The Spinnaker managing account role must have the permission to invoke configured API gateway.   
 
 ### Requirements
-1. Must be used with Spinnaker version 1.24 or higher.
+1. Must be used with Spinnaker version 1.28 or higher.
 2. Must enable [AWS support](https://docs.armory.io/docs/armory-admin/aws/add-aws-account/)
 3. Must enable [Lambda support](https://kb.armory.io/s/article/AWS-Lambda-Custom-Webhook-Stages).
 4. Must enable [ECS support](https://spinnaker.io/setup/install/providers/aws/aws-ecs/#clouddriver-yaml-properties)

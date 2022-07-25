@@ -1,4 +1,3 @@
-
 apply plugin: "io.spinnaker.plugin.service-extension"
 apply plugin: 'java'
 apply plugin: "groovy"
@@ -21,45 +20,46 @@ spinnakerPlugin {
   requires = "clouddriver>=7.1.0"
 }
 
-
 dependencies {
-  implementation "com.google.guava:guava:30.0-jre"
-  compileOnly "org.codehaus.groovy:groovy-all:+"
-  compileOnly (group: 'org.springframework', name: 'spring-context', version: '5.2.9.RELEASE')
-  compileOnly (group: 'io.spinnaker.kork', name: 'kork-plugins-spring-api', version: "${korkVersion}")
-  compileOnly (group: 'org.springframework', name: 'spring-web', version: '5.2.9.RELEASE')
-  compileOnly "io.spinnaker.clouddriver:clouddriver-api:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:clouddriver-aws:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:clouddriver-ecs:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:clouddriver-lambda:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:cats-core:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:clouddriver-security:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:clouddriver-eureka:${clouddriverVersion}"
-  compileOnly "io.spinnaker.clouddriver:clouddriver-core:${clouddriverVersion}"
-  compileOnly "io.spinnaker.fiat:fiat-core:${fiatVersion}"
-  compileOnly 'com.amazonaws:aws-java-sdk:1.11.802'
-  compileOnly 'org.projectlombok:lombok:+'
-  compileOnly 'com.amazonaws:aws-java-sdk-core:1.11.1009'
-  annotationProcessor "org.projectlombok:lombok:+"
-  annotationProcessor("org.pf4j:pf4j:$pf4jVersion")
+  implementation(enforcedPlatform("io.spinnaker.clouddriver:clouddriver-bom:${clouddriverVersion}"))
+  implementation "com.google.guava:guava"
+  compileOnly "org.codehaus.groovy:groovy-all"
+  compileOnly (group: 'org.springframework', name: 'spring-context')
+  compileOnly (group: 'io.spinnaker.kork', name: 'kork-plugins-spring-api')
+  compileOnly (group: 'org.springframework', name: 'spring-web')
+  compileOnly "io.spinnaker.clouddriver:clouddriver-api"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-aws"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-ecs"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-lambda"
+  compileOnly "io.spinnaker.clouddriver:cats-core"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-security"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-eureka"
+  compileOnly "io.spinnaker.clouddriver:clouddriver-core"
+  compileOnly "io.spinnaker.fiat:fiat-core"
+  compileOnly 'com.amazonaws:aws-java-sdk'
+  compileOnly 'org.projectlombok:lombok'
+  compileOnly 'com.amazonaws:aws-java-sdk-core'
+  compileOnly "org.codehaus.groovy:groovy"
 
-  testImplementation "io.spinnaker.clouddriver:clouddriver-api:${clouddriverVersion}"
-  testImplementation "io.spinnaker.clouddriver:clouddriver-aws:${clouddriverVersion}"
-  testImplementation "io.spinnaker.clouddriver:clouddriver-ecs:${clouddriverVersion}"
-  testImplementation "io.spinnaker.clouddriver:cats-core:${clouddriverVersion}"
-  testImplementation "io.spinnaker.clouddriver:clouddriver-security:${clouddriverVersion}"
-  testImplementation "io.spinnaker.clouddriver:clouddriver-eureka:${clouddriverVersion}"
-  testImplementation "io.spinnaker.clouddriver:clouddriver-core:${clouddriverVersion}"
-  testImplementation "io.spinnaker.fiat:fiat-core:${fiatVersion}"
-  testImplementation group: 'io.strikt', name: 'strikt-core', version: '0.22.1'
-  testImplementation group: 'dev.minutest', name: 'minutest', version: '1.10.0'
-  testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.2.5.RELEASE'
-  testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.9.RELEASE'
-  testImplementation 'com.amazonaws:aws-java-sdk-core:1.11.802'
-  compile "org.codehaus.groovy:groovy:2.5.13"
-  testCompile platform("org.spockframework:spock-bom:2.0-M3-groovy-2.5")
+  annotationProcessor(platform("io.spinnaker.clouddriver:clouddriver-bom:${clouddriverVersion}"))
+  annotationProcessor "org.projectlombok:lombok"
+  annotationProcessor("org.pf4j:pf4j")
+
+  testImplementation "io.spinnaker.clouddriver:clouddriver-api"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-aws"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-ecs"
+  testImplementation "io.spinnaker.clouddriver:cats-core"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-security"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-eureka"
+  testImplementation "io.spinnaker.clouddriver:clouddriver-core"
+  testImplementation "io.spinnaker.fiat:fiat-core"
+  testImplementation group: 'io.strikt', name: 'strikt-core'
+  testImplementation group: 'dev.minutest', name: 'minutest'
+  testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
+  testImplementation group: 'org.springframework', name: 'spring-web'
+  testImplementation 'com.amazonaws:aws-java-sdk-core'
+  testCompile "org.codehaus.groovy:groovy"
   testCompile "org.spockframework:spock-core"
-
 }
 
 test {
