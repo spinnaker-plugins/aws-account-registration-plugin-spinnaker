@@ -1,11 +1,3 @@
-pluginManagement {
-  repositories {
-    mavenLocal()
-    maven { url "https://dl.bintray.com/spinnaker/gradle/" }
-    gradlePluginPortal()
-  }
-}
-
 rootProject.name="aws-account-registration-plugin-spinnaker"
 
 include "account-registration"
