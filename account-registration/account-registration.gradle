@@ -2,14 +2,13 @@ apply plugin: "io.spinnaker.plugin.service-extension"
 apply plugin: 'java'
 apply plugin: "groovy"
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 17
+targetCompatibility = 17
 
 repositories {
   mavenLocal()
   mavenCentral()
   jcenter()
-  maven { url "http://dl.bintray.com/spinnaker-releases/jars/" }
 }
 
 sourceSets.main.java.srcDirs = ["src/main/java"]
@@ -58,8 +57,8 @@ dependencies {
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
   testImplementation group: 'org.springframework', name: 'spring-web'
   testImplementation 'com.amazonaws:aws-java-sdk-core'
-  testCompile "org.codehaus.groovy:groovy"
-  testCompile "org.spockframework:spock-core"
+  testImplementation "org.codehaus.groovy:groovy"
+  testImplementation "org.spockframework:spock-core"
 }
 
 test {
