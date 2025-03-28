@@ -2,14 +2,9 @@ apply plugin: "io.spinnaker.plugin.service-extension"
 apply plugin: 'java'
 apply plugin: "groovy"
 
-sourceCompatibility = 11
-targetCompatibility = 11
-
-repositories {
-  mavenLocal()
-  mavenCentral()
-  jcenter()
-  maven { url "http://dl.bintray.com/spinnaker-releases/jars/" }
+java {
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 sourceSets.main.java.srcDirs = ["src/main/java"]
@@ -20,10 +15,16 @@ spinnakerPlugin {
   requires = "clouddriver>=7.1.0"
 }
 
+repositories {
+  mavenLocal()
+  mavenCentral()
+  jcenter() { allowInsecureProtocol = true }
+}
+
 dependencies {
   implementation(enforcedPlatform("io.spinnaker.clouddriver:clouddriver-bom:${clouddriverVersion}"))
   implementation "com.google.guava:guava"
-  compileOnly "org.codehaus.groovy:groovy-all"
+  compileOnly "org.apache.groovy:groovy:4.0.15"
   compileOnly (group: 'org.springframework', name: 'spring-context')
   compileOnly (group: 'io.spinnaker.kork', name: 'kork-plugins-spring-api')
   compileOnly (group: 'org.springframework', name: 'spring-web')
@@ -39,7 +40,7 @@ dependencies {
   compileOnly 'com.amazonaws:aws-java-sdk'
   compileOnly 'org.projectlombok:lombok'
   compileOnly 'com.amazonaws:aws-java-sdk-core'
-  compileOnly "org.codehaus.groovy:groovy"
+  compileOnly "org.apache.groovy:groovy:4.0.15"
 
   annotationProcessor(platform("io.spinnaker.clouddriver:clouddriver-bom:${clouddriverVersion}"))
   annotationProcessor "org.projectlombok:lombok"
@@ -58,8 +59,21 @@ dependencies {
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
   testImplementation group: 'org.springframework', name: 'spring-web'
   testImplementation 'com.amazonaws:aws-java-sdk-core'
-  testCompile "org.codehaus.groovy:groovy"
-  testCompile "org.spockframework:spock-core"
+  testImplementation "org.apache.groovy:groovy:4.0.15"
+  testImplementation "org.spockframework:spock-core:2.3-groovy-4.0"
+}
+
+// Add resolution strategy to fix Groovy conflict
+configurations.all {
+  resolutionStrategy {
+    force 'org.apache.groovy:groovy:4.0.15'
+    force 'org.apache.groovy:groovy-json:4.0.15'
+    force 'org.apache.groovy:groovy-templates:4.0.15'
+    
+    // Exclude conflicting Groovy modules
+    exclude group: 'org.codehaus.groovy', module: 'groovy'
+    exclude group: 'org.codehaus.groovy', module: 'groovy-all'
+  }
 }
 
 test {
@@ -67,4 +81,13 @@ test {
   testLogging {
     events "passed", "skipped", "failed", "standardOut", "standardError"
   }
+  
+  // Retain Java 17 module system compatibility flags for tests
+  jvmArgs = [
+    '--add-opens=java.base/java.lang=ALL-UNNAMED',
+    '--add-opens=java.base/java.util=ALL-UNNAMED',
+    '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+    '--add-opens=java.base/java.text=ALL-UNNAMED',
+    '--add-opens=java.desktop/java.awt.font=ALL-UNNAMED'
+  ]
 }

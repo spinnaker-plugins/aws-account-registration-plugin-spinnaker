@@ -49,6 +49,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -135,14 +136,29 @@ public class AccountsStatus {
             setBackoffTime();
             return false;
         }
+        
+        // Handle null or empty accounts lists
+        if (response.getAccounts() == null) {
+            log.warn("Response accounts list is null, treating as empty list");
+            response.setAccounts(new ArrayList<>());
+        }
+        
+        // Process pagination if present
         if (response.getPagination() != null && !"".equals(response.getPagination().getNextUrl())) {
             String nextUrl = response.getPagination().getNextUrl();
-            List<Account> accounts = response.getAccounts();
+            // Create a mutable copy of the accounts list to avoid UnsupportedOperationException
+            // Also handle the case where getAccounts() might return null
+            List<Account> accounts = new ArrayList<>(response.getAccounts());
             while (nextUrl != null && !"".equals(nextUrl)) {
                 log.info("Calling next URL, {}", nextUrl);
                 Response nextResponse = getResourceFromRemoteHost(nextUrl);
                 if (nextResponse != null) {
-                    accounts.addAll(nextResponse.getAccounts());
+                    // Handle null accounts list from nextResponse
+                    if (nextResponse.getAccounts() != null) {
+                        accounts.addAll(nextResponse.getAccounts());
+                    } else {
+                        log.warn("Next page response accounts list is null");
+                    }
                     if (nextResponse.getPagination() == null) {
                         nextUrl = null;
                         continue;
@@ -154,6 +170,8 @@ public class AccountsStatus {
             }
             response.setAccounts(accounts);
         }
+        
+        // Check if the accounts list is empty after all processing
         if (response.getAccounts().isEmpty()) {
             log.info("Returned response contained empty accounts.");
             return false;
@@ -232,7 +250,7 @@ public class AccountsStatus {
         }
         if (response.getAccounts() == null || response.getAccounts().isEmpty()) {
             log.info("No accounts returned from remote host.");
-            response.setAccounts(Collections.emptyList());
+            response.setAccounts(new ArrayList<>());
             return response;
         }
         log.info("Received a valid response from remote host.");
