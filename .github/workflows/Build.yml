@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-22.04
     name: test and build
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -21,9 +21,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 17
+          distribution: 'temurin'
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Run unit tests
@@ -34,9 +35,9 @@ jobs:
         id: zip_path
         run: |
           a=$(find build/distributions/ -name '*.zip' -printf "%f")
-          echo "::set-output name=zip_path::$a"
+          echo "zip_path=$a" >> $GITHUB_OUTPUT
       - name: Upload bundle
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: bundle
           path: build/distributions/*.zip
