@@ -19,10 +19,6 @@ repositories {
   mavenLocal()
   mavenCentral()
   jcenter() { allowInsecureProtocol = true }
-  maven { 
-    url "http://dl.bintray.com/spinnaker-releases/jars/" 
-    allowInsecureProtocol = true
-  }
 }
 
 dependencies {
