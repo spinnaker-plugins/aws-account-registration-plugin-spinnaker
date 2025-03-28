@@ -250,7 +250,7 @@ public class AccountsStatus {
         }
         if (response.getAccounts() == null || response.getAccounts().isEmpty()) {
             log.info("No accounts returned from remote host.");
-            response.setAccounts(Collections.emptyList());
+            response.setAccounts(new ArrayList<>());
             return response;
         }
         log.info("Received a valid response from remote host.");
